@@ -134,6 +134,25 @@ implementation when it contains information a reviewer needs.
 
 Only after the self-check passes, declare the implementation ready for review.
 
+## When you receive code review feedback
+
+Before editing code, run the `review-feedback` skill on the reviewer findings and
+the current plan, contract, implementation notes, and diff.
+
+Do not treat reviewer findings as a patch list. First produce the
+`review-feedback` intake summary, then repair only findings routed to
+implementation. If the feedback is routed to plan revision, contract decision,
+reviewer clarification, or escalation, callback through the coordination channel
+instead of patching around the missing decision.
+
+When feedback exposes a plan gap, contract gap, or systemic design gap, stop.
+Workers do not edit plans, contracts, surface matrices, or scope, and must not
+continue implementation until the planner or coordination channel resolves the
+gap.
+
+After repair, include the `review-feedback` result, fixed findings, verification
+gates, and remaining blockers in the callback or final implementation result.
+
 ## When you discover a contract gap
 
 During implementation you may discover that:
@@ -142,14 +161,16 @@ During implementation you may discover that:
 - The invariant matrix is incomplete
 - Implementation reveals a new behavior decision not covered by the plan or contract
 
-Capture it as a worker-discovered contract gap. Include:
+Capture it as a worker-discovered contract gap and callback through the
+coordination channel. Include:
 - Gap id
 - Affected plan or contract section
 - Missing surface, invariant, or behavior decision
 - Why implementation should pause or continue only with explicit scope clarity
 
-If the gap is small and obvious, you can implement it and still capture the gap
-so the plan stays accurate.
+Do not implement through a contract gap, even when the missing behavior seems
+small or obvious. The planner or coordination channel must update the plan or
+contract before implementation continues.
 
 ## Rules
 

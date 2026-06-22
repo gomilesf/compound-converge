@@ -3,7 +3,7 @@ import path from "node:path"
 
 const ROOT = process.cwd()
 
-const BASE_SKILLS = ["plan", "plan-review", "work", "code-review"].sort()
+const BASE_SKILLS = ["plan", "plan-review", "work", "code-review", "review-feedback"].sort()
 const CODEX_ONLY_SKILLS = ["plan-loop", "build-loop", "multi-session"].sort()
 const CODEX_SKILLS = [...BASE_SKILLS, ...CODEX_ONLY_SKILLS].sort()
 

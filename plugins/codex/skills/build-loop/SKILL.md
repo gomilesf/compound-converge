@@ -1,6 +1,6 @@
 ---
 name: build-loop
-description: Orchestrate a monitored Codex implementation loop with a worker, code reviewers, repair routing, step-back classification, QA gates, callback transport, heartbeat waiting, and strict fresh-reviewer exit conditions.
+description: Orchestrate a monitored Codex implementation loop with a worker, code reviewers, actor-local review feedback handling, QA gates, callback transport, heartbeat waiting, and strict fresh-reviewer exit conditions.
 argument-hint: "[plan path, base commit, or implementation goal]"
 ---
 
@@ -13,7 +13,7 @@ Before doing anything, open and read `references/multi-session-protocol.md`, the
 - real Codex thread gate,
 - orchestrator callback transport gate,
 - heartbeat handoff gate,
-- step-back classification gate,
+- actor-local review-feedback gate,
 - fresh-reviewer exit gate.
 
 ## Phase 0: Orchestrator Setup
@@ -116,59 +116,43 @@ Reviewer should report blocking findings only:
 
 Non-blocking quality notes belong in a separate quality review unless the orchestrator requested them here.
 
-## Phase 3: Mandatory Step Back Before Repair
+## Phase 3: Return Review Feedback to Worker
 
-This is the most important build-loop step.
+After reviewer callback is visible in the orchestrator thread, send the reviewer feedback to the same verified worker thread with `send_message_to_thread`.
 
-For every blocking finding, ask:
+Do not classify findings, choose repair strategy, filter reviewer output, or turn the review into a patch list in the orchestrator.
 
-1. Is this a local code bug, or does it expose a broader missing invariant?
-2. Does the plan already define the expected behavior, or is this a contract gap?
-3. Is the failing surface one instance of a repeated pattern elsewhere?
-4. Could a narrow fix create inconsistent state, unsafe side effects, or replay/idempotency holes?
-5. Does the test suite need a new gate for the class of issue, not only the exact example?
-6. Does the implementation note or plan need to record a deviation or newly discovered contract?
-
-Classify each finding:
-
-- **Local code bug**: plan is clear; implementation is wrong in a bounded place.
-- **Pattern bug**: the same flawed assumption likely appears in adjacent surfaces; worker must audit and repair the class.
-- **Contract gap**: behavior is not defined well enough; planner or orchestrator must resolve before worker patches.
-- **Systemic design gap**: current architecture or state model is insufficient; replan or design addendum required.
-- **Verification gap**: implementation may be correct, but required proof is absent.
-- **Ops/tooling blocker**: code may be correct, but external validation cannot complete safely.
-- **Quality-only issue**: useful cleanup, not a blocker unless it threatens correctness or future safety.
-
-Do not forward raw reviewer output to the worker.
-
-## Phase 4: Worker Repair
-
-Send classified repair work to the same verified worker thread with `send_message_to_thread`, unless the classification requires a plan loop or different specialist.
-
-Repair prompt must include:
+Feedback prompt must include:
 
 - destination orchestrator Codex thread id,
-- original reviewer finding,
-- orchestrator classification,
-- targeted fix vs broader audit instruction,
-- required regression tests and gates,
+- original reviewer findings exactly,
+- reviewer thread id,
+- required feedback skill: `review-feedback`,
+- plan, behavior contract, implementation notes, base commit, review head, and current head,
+- instruction to run `review-feedback` and produce its intake summary before editing,
+- instruction to repair only findings routed to implementation by `review-feedback`,
+- instruction to stop and callback instead of patching when `review-feedback` routes a finding to plan revision, contract decision, systemic design gap, reviewer clarification, or escalation,
+- instruction that workers must never edit plans, contracts, surface matrices, or scope,
+- instruction to run the gates selected by `review-feedback`,
 - unchanged safety boundaries,
 - callback transport block,
 - callback template.
 
-Worker repair callback template:
+Worker feedback callback template:
 
 ```text
-I am the worker. My session/thread id is <id or thread id not exposed>. Orchestrator thread id: <orchestrator-id>. Reviewer findings repair is complete. Base commit: <base>. Previous review head: <old>. New head commit: <new>. Fixed findings: <brief>. Verification: <commands/results>. Known gaps: <none or list>. Please arrange same-reviewer focused re-review.
+I am the worker. My session/thread id is <id or thread id not exposed>. Orchestrator thread id: <orchestrator-id>. Reviewer feedback handling is complete. Base commit: <base>. Previous review head: <old>. New head commit: <new>. Review-feedback result: <repaired / plan or contract gap / escalation / clarification needed>. Fixed findings: <brief or none>. Verification: <commands/results>. Known gaps: <none or list>. Please arrange the next review step.
 ```
 
 Create or update a heartbeat and end the active turn.
 
-If the classification was pattern bug or systemic bug, the worker must report what broader surface was audited.
+If the worker reports a plan or contract gap, escalation, or clarification need, route that callback to the appropriate planner, reviewer, or user decision before requesting re-review.
 
-## Phase 5: Same Reviewer Focused Re-Review
+## Phase 4: Same Reviewer Focused Re-Review
 
-After repair callback is visible in the orchestrator thread, send focused re-review to the same verified reviewer thread with `send_message_to_thread`.
+After worker feedback callback is visible in the orchestrator thread and a reviewable implementation repair exists, send focused re-review to the same verified reviewer thread with `send_message_to_thread`.
+
+If the worker reported a plan gap, contract gap, systemic design gap, escalation, or clarification need, do not request code re-review yet. Route that blocker to the planner, reviewer, or user decision path first, then return to the worker only after the plan or contract is resolved.
 
 Focused scope:
 
@@ -181,7 +165,7 @@ Create or update a heartbeat and end the active turn.
 
 Same reviewer pass is not enough to exit.
 
-## Phase 6: New Fresh Review
+## Phase 5: New Fresh Review
 
 After same reviewer passes, create a new fresh code reviewer thread for a complete first review. Verify it with `read_thread`.
 
@@ -193,7 +177,7 @@ Final implementation exit condition:
 
 If the new fresh reviewer finds blockers, repeat from Phase 3.
 
-## Phase 7: QA and External Verification
+## Phase 6: QA and External Verification
 
 If the plan requires integration, staging, deployment, end-to-end, or smoke checks, run them through a QA or ops worker after code review is clean, unless the plan explicitly orders them earlier.
 
@@ -221,7 +205,7 @@ Classify QA failures before routing:
 
 Real QA failures can reopen the build loop.
 
-## Phase 8: Quality Review
+## Phase 7: Quality Review
 
 Optionally run a separate quality reviewer for:
 
@@ -241,7 +225,7 @@ Report:
 - base commit and final head,
 - worker and reviewer thread ids verified with `read_thread`,
 - callback transport status,
-- review findings and step-back classifications,
+- review findings and worker `review-feedback` results,
 - repair commits,
 - final fresh reviewer result,
 - QA evidence and gates,

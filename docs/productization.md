@@ -36,19 +36,20 @@ compound-converge
 |   |-- plan-review/
 |   |-- work/
 |   |-- code-review/
+|   |-- review-feedback/
 |   |-- plan-loop/
 |   |-- build-loop/
 |   `-- multi-session/
 |-- plugins/
 |   |-- codex/
 |   |   |-- .codex-plugin/plugin.json
-|   |   `-- skills/        all seven skills
+|   |   `-- skills/        all eight skills
 |   |-- claude/
 |   |   |-- .claude-plugin/plugin.json
-|   |   `-- skills/        four base skills
+|   |   `-- skills/        five base skills
 |   `-- generic/
 |       |-- .cursor-plugin/plugin.json
-|       `-- skills/        four base skills
+|       `-- skills/        five base skills
 |-- .claude-plugin/         marketplace descriptor
 |-- .agents/plugins/        Codex marketplace descriptor
 |-- .cursor-plugin/         Cursor marketplace descriptor
@@ -67,7 +68,7 @@ compound-converge
 Native plugin loaders discover skills from a plugin root. Compound Converge uses different plugin roots so each host receives only the skills it can run:
 
 - Claude Code marketplace source points at `./plugins/claude`, which contains only base skills.
-- Codex marketplace source points at `./plugins/codex`, whose `.codex-plugin/plugin.json` points at `./skills/` and exposes all seven skills.
+- Codex marketplace source points at `./plugins/codex`, whose `.codex-plugin/plugin.json` points at `./skills/` and exposes all eight skills.
 - Cursor, OpenCode, Pi, and Gemini-facing surfaces use the base-only generated skills under `./plugins/generic/skills`.
 
 ### Generated skill roots are committed
@@ -85,10 +86,10 @@ The generated roots are committed because users install directly from GitHub and
 `scripts/validate.ts` is the text interface for productization checks. It verifies platform metadata, repository identity, marketplace sources, Codex's native skills path, and platform skill surfaces:
 
 ```text
-skills-src/               7 skills
-plugins/codex/skills      7 skills
-plugins/claude/skills     4 skills
-plugins/generic/skills    4 skills
+skills-src/               8 skills
+plugins/codex/skills      8 skills
+plugins/claude/skills     5 skills
+plugins/generic/skills    5 skills
 ```
 
 ### Self-contained skills

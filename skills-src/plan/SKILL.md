@@ -187,6 +187,22 @@ across all surfaces.
 Ensure the plan document exists, any needed behavior contract exists, and both
 are coherent enough for a worker to start without inventing missing behavior.
 
+## When you receive plan review feedback
+
+Before editing the plan, run the `review-feedback` skill on the reviewer
+findings and the current goal, source prompt, plan, contract, and relevant
+codebase evidence.
+
+Do not treat reviewer findings as an edit list. First produce the
+`review-feedback` intake summary, then revise only findings routed to planning.
+If the feedback is routed to contract decision, reviewer clarification, or
+escalation, callback through the coordination channel instead of rewriting the
+plan around an unresolved decision.
+
+After revision, include the `review-feedback` result, changed plan sections,
+verification gates, and remaining blockers in the callback or final planning
+result.
+
 ## Rules
 
 - **No code in the plan.** No function signatures, no pseudo-code, no code

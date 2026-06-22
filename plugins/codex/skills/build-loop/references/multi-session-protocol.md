@@ -61,23 +61,17 @@ A heartbeat turn may do one status check. If the specialist is still active, rep
 
 Continue immediately only when an explicit callback is already present or `read_thread` already shows the specialist completed.
 
-### Gate 4: Step Back Before Repair
+### Gate 4: Actor-Local Review Feedback
 
-Never forward raw reviewer output as a patch list.
+Reviewer feedback returns to the same planner or worker thread that produced the reviewed artifact.
 
-Classify every blocking finding before routing:
+The orchestrator must not classify findings, choose the repair route, filter reviewer output, or turn the review into a patch list.
 
-- local code bug,
-- pattern bug across adjacent surfaces,
-- targeted plan or contract gap,
-- systemic design gap,
-- missing real surface,
-- missing required gate or verification,
-- unsafe side-effect path,
-- tooling or ops blocker,
-- quality-only issue.
+The actor prompt must require the `review-feedback` skill before edits. The actor is responsible for feedback intake, routing each finding, selecting verification gates, and reporting the intake result in its callback.
 
-If the finding exposes a broader invariant, contract, or architecture issue, route it as such. Do not let a worker blindly patch the exact line named by the reviewer.
+Role boundaries still apply: workers may repair implementation-owned findings only. Workers must stop and callback for plan gaps, contract gaps, systemic design gaps, reviewer clarification, or escalation. Only planners may produce plan or contract revisions.
+
+The orchestrator routes only after the actor callback reports a role-valid result: implementation repair from a worker, plan or contract revision from a planner, or a blocker that needs planner, reviewer, user, or escalation handling.
 
 ### Gate 5: Fresh Reviewer Exit
 
@@ -86,8 +80,8 @@ Same-reviewer pass is never the final exit condition.
 The exit sequence is:
 
 1. Fresh reviewer performs a complete first review.
-2. If blockers exist, classify them and route repair or replanning.
-3. Same reviewer performs a focused re-review.
+2. If blockers exist, return feedback to the same planner or worker and require `review-feedback`.
+3. Same reviewer performs a focused re-review after the actor produces a reviewable update.
 4. If same reviewer passes, start a new fresh reviewer for another complete first review.
 5. Exit only when the new fresh reviewer reports no blocking findings.
 
@@ -122,7 +116,7 @@ Heartbeat prompts should say:
 
 - which specialist thread to check,
 - what callback shape to detect,
-- how to classify blockers,
+- whether the actor completed `review-feedback` intake,
 - if still active, report one short status and continue waiting,
 - do not busy-wait,
 - delete or update the heartbeat when the phase is complete or stale.
@@ -135,7 +129,7 @@ When the workflow completes, summarize:
 - specialist thread ids verified with `read_thread`,
 - callback transport status,
 - review loop results,
-- step-back classifications,
+- actor `review-feedback` results,
 - verification gates,
 - remaining known gaps,
 - heartbeat cleanup,

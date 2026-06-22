@@ -13,7 +13,7 @@ Before doing anything, open and read `references/multi-session-protocol.md`, the
 - real Codex thread gate,
 - orchestrator callback transport gate,
 - heartbeat handoff gate,
-- step-back classification gate,
+- actor-local review-feedback gate,
 - fresh-reviewer exit gate.
 
 Do not implement product code in this workflow.
@@ -104,36 +104,33 @@ Blocking plan findings include:
 - plan criterion that cannot be implemented as written,
 - unsafe side-effect assumption.
 
-## Phase 3: Step Back and Classify
+## Phase 3: Return Review Feedback to Planner
 
-If the reviewer reports blockers, classify before sending anything back:
+If the reviewer reports blockers, send the reviewer feedback to the same verified planner thread with `send_message_to_thread`.
 
-- **Targeted gap**: plan architecture is sound, but a concrete surface, lifecycle, matrix row, or gate is missing.
-- **Systemic gap**: the finding exposes a deeper design, ownership, contract, or behavior-model problem.
-- **Out-of-scope issue**: valid concern, but outside this plan and allowed by source requirements.
+Do not classify findings, choose revision strategy, filter reviewer output, or turn the review into an edit list in the orchestrator.
 
-Do not send raw findings as "please fix this".
-
-## Phase 4: Planner Revision
-
-Send classified findings to the same verified planner thread with `send_message_to_thread`.
-
-The revision prompt must include:
+The feedback prompt must include:
 
 - destination orchestrator Codex thread id,
 - reviewer thread id,
-- exact blocker text,
-- orchestrator classification,
-- targeted edit vs broader redesign instruction,
+- exact reviewer findings,
+- required feedback skill: `review-feedback`,
+- original planning goal and source prompt,
+- current plan path and related contracts,
+- instruction to run `review-feedback` and produce its intake summary before editing,
+- instruction to revise only findings routed to planning by `review-feedback`,
+- instruction to callback instead of editing when `review-feedback` routes a finding to contract decision, reviewer clarification, or escalation,
+- instruction to run the gates selected by `review-feedback`,
 - unchanged scope boundaries,
 - callback transport block,
 - callback template.
 
 Create or update a heartbeat and end the active turn.
 
-## Phase 5: Focused Re-Review
+## Phase 4: Focused Re-Review
 
-After planner revision callback is visible in the orchestrator thread, send a focused re-review request to the same verified reviewer thread with `send_message_to_thread`.
+After planner feedback callback is visible in the orchestrator thread and a reviewable plan revision exists, send a focused re-review request to the same verified reviewer thread with `send_message_to_thread`.
 
 Focused scope:
 
@@ -143,11 +140,13 @@ Focused scope:
 
 Create or update a heartbeat and end the active turn.
 
+If the planner reports a contract decision, escalation, or clarification need, route that callback to the appropriate reviewer or user decision before requesting re-review.
+
 If same reviewer still finds blockers, repeat Phase 3.
 
-If same reviewer passes, do not exit. Continue to Phase 6.
+If same reviewer passes, do not exit. Continue to Phase 5.
 
-## Phase 6: Final Fresh Review
+## Phase 5: Final Fresh Review
 
 Create a new fresh reviewer Codex thread for a complete first review of the revised plan. Verify it with `read_thread`.
 
@@ -167,7 +166,7 @@ Report:
 - planner thread id,
 - reviewer thread ids,
 - callback transport status,
-- blockers and step-back classifications,
+- blockers and planner `review-feedback` results,
 - final fresh reviewer verdict,
 - heartbeat cleanup,
 - known gaps.

@@ -22,6 +22,7 @@ The base skills work across supported agent hosts. The loop skills are Codex-onl
 | `/plan-review` | Review a plan against the actual codebase for missing surfaces, incomplete slices, and wrong invariants | Claude Code, Codex |
 | `/work` | Execute a plan slice by slice with TDD and implementation notes | Claude Code, Codex |
 | `/code-review` | Review implementation against the plan and contract, separating code bugs from contract gaps | Claude Code, Codex |
+| `/review-feedback` | Handle reviewer feedback inside the planner or worker session before repair or revision | Claude Code, Codex |
 | `/plan-loop` | Orchestrate the plan -> fresh plan-review loop across real Codex threads | Codex |
 | `/build-loop` | Orchestrate worker -> fresh code-review -> repair -> final fresh-review across real Codex threads | Codex |
 | `/multi-session` | Shared Codex multi-thread protocol for specialist handoff, callbacks, heartbeat waiting, and exit gates | Codex |
@@ -35,7 +36,7 @@ The base skills work across supported agent hosts. The loop skills are Codex-onl
 /plugin install compound-converge
 ```
 
-The Claude plugin exposes only the four base skills: `/plan`, `/plan-review`, `/work`, and `/code-review`.
+The Claude plugin exposes only the five base skills: `/plan`, `/plan-review`, `/work`, `/code-review`, and `/review-feedback`.
 
 ### Codex App
 
@@ -155,8 +156,8 @@ gemini extensions install "$PWD"
 
 ```text
 skills-src/        Canonical skill sources
-plugins/codex/    Codex plugin root with all seven skills
-plugins/claude/   Claude Code plugin root with four base skills
+plugins/codex/    Codex plugin root with all eight skills
+plugins/claude/   Claude Code plugin root with five base skills
 plugins/generic/  Base-only skill root for generic hosts
 .claude-plugin/   Claude Code marketplace metadata
 .agents/plugins/  Codex custom marketplace descriptor
