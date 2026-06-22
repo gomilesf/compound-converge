@@ -1,0 +1,37 @@
+{
+  "name": "compound-converge",
+  "version": "0.1.0",
+  "description": "Fresh-reviewer convergence workflow skills for coding agents",
+  "type": "module",
+  "private": true,
+  "main": ".opencode/plugins/compound-converge.js",
+  "pi": {
+    "extensions": [
+      "./.pi/extensions/compound-converge.ts"
+    ],
+    "skills": [
+      "./plugins/generic/skills"
+    ]
+  },
+  "homepage": "https://github.com/gomilesfd/compound-converge",
+  "repository": "https://github.com/gomilesfd/compound-converge",
+  "license": "MIT",
+  "keywords": [
+    "ai",
+    "agent-skills",
+    "codex",
+    "claude-code",
+    "compound-engineering",
+    "fresh-reviewer",
+    "workflow-automation"
+  ],
+  "scripts": {
+    "sync": "bun run scripts/sync-platform-skills.ts",
+    "validate": "bun run scripts/validate.ts",
+    "plugin:validate": "claude plugin validate .claude-plugin/marketplace.json && claude plugin validate plugins/claude",
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "bun-types": "^1.0.0"
+  }
+}

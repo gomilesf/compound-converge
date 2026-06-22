@@ -8,7 +8,7 @@ argument-hint: "[planning goal, requirements path, behavior contract path, or pl
 
 Use this skill for plan-only multi-session orchestration.
 
-Before doing anything, open and read `../multi-session/SKILL.md`, then apply the protocol gates from `multi-session`:
+Before doing anything, open and read `references/multi-session-protocol.md`, then apply the protocol gates from `multi-session`:
 
 - real Codex thread gate,
 - orchestrator callback transport gate,
@@ -60,7 +60,7 @@ Planner prompt must include:
 Planner callback template:
 
 ```text
-我是 planner，我的 session/thread id 是 <id or thread id not exposed>。Orchestrator thread id: <orchestrator-id>. 我这一轮任务已经完成。Plan path: <absolute path>. Key status: <brief>. 请 orchestrator 决定下一步。
+I am the planner. My session/thread id is <id or thread id not exposed>. Orchestrator thread id: <orchestrator-id>. This planning round is complete. Plan path: <absolute path>. Key status: <brief>. Please decide the next step.
 ```
 
 After verifying the planner thread, create or update a heartbeat and end the active turn. Do not use `sleep` or repeated `read_thread` to wait.
@@ -88,7 +88,7 @@ Reviewer prompt must include:
 Reviewer callback template:
 
 ```text
-我是 fresh reviewer，我的 session/thread id 是 <id or thread id not exposed>。Orchestrator thread id: <orchestrator-id>. 我这一轮首次完整 review 已完成。Verdict: <passed / blocking findings>. Findings: <none or numbered concise list>. 请 orchestrator 决定下一步。
+I am the fresh reviewer. My session/thread id is <id or thread id not exposed>. Orchestrator thread id: <orchestrator-id>. This first-pass full review is complete. Verdict: <passed / blocking findings>. Findings: <none or numbered concise list>. Please decide the next step.
 ```
 
 Create or update a heartbeat and end the active turn while waiting. Do not manually poll.

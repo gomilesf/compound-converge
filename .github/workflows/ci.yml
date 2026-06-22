@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Check generated platform skills
+        run: |
+          bun run sync
+          git diff --exit-code -- plugins/codex/skills plugins/claude/skills plugins/generic/skills
+
+      - name: Validate productization metadata
+        run: bun run validate
+
+      - name: Validate Claude plugin schema
+        run: |
+          npm install -g @anthropic-ai/claude-code@2.1.175
+          bun run plugin:validate
+
+      - name: Run tests
+        run: bun test

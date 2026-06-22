@@ -8,7 +8,7 @@ argument-hint: "[plan path, base commit, or implementation goal]"
 
 Use this skill for implementation work that should be executed by a monitored Codex worker and reviewed by monitored Codex reviewers.
 
-Before doing anything, open and read `../multi-session/SKILL.md`, then apply the protocol gates from `multi-session`:
+Before doing anything, open and read `references/multi-session-protocol.md`, then apply the protocol gates from `multi-session`:
 
 - real Codex thread gate,
 - orchestrator callback transport gate,
@@ -65,13 +65,13 @@ Worker execution rules:
 Worker completion callback template:
 
 ```text
-我是 worker，我的 session/thread id 是 <id or thread id not exposed>。Orchestrator thread id: <orchestrator-id>. 我这一轮实现任务已经完成。Base commit: <base>. Head commit: <head>. Key changes: <brief>. Verification: <commands/results>. Known gaps: <none or list>. 请 orchestrator 安排 fresh code reviewer。
+I am the worker. My session/thread id is <id or thread id not exposed>. Orchestrator thread id: <orchestrator-id>. This implementation round is complete. Base commit: <base>. Head commit: <head>. Key changes: <brief>. Verification: <commands/results>. Known gaps: <none or list>. Please arrange a fresh code reviewer.
 ```
 
 Worker blocker callback template:
 
 ```text
-我是 worker，我的 session/thread id 是 <id or thread id not exposed>。Orchestrator thread id: <orchestrator-id>. 我遇到 blocking contract gap。Gap: <id/summary>. Evidence: <files/tests>. 我建议 <repair/escalation>. 请 orchestrator 决定下一步。
+I am the worker. My session/thread id is <id or thread id not exposed>. Orchestrator thread id: <orchestrator-id>. I found a blocking contract gap. Gap: <id/summary>. Evidence: <files/tests>. Recommendation: <repair/escalation>. Please decide the next step.
 ```
 
 After verifying the worker thread, create or update a heartbeat and end the active turn. Do not use `sleep` or repeated `read_thread` to wait.
@@ -99,7 +99,7 @@ Reviewer prompt must include:
 Reviewer callback template:
 
 ```text
-我是 fresh code reviewer，我的 session/thread id 是 <id or thread id not exposed>。Orchestrator thread id: <orchestrator-id>. 我这一轮首次完整 code review 已完成。Verdict: <ready / not ready>. Findings: <none or numbered blocker list>. 请 orchestrator 决定下一步。
+I am the fresh code reviewer. My session/thread id is <id or thread id not exposed>. Orchestrator thread id: <orchestrator-id>. This first-pass full code review is complete. Verdict: <ready / not ready>. Findings: <none or numbered blocker list>. Please decide the next step.
 ```
 
 Create or update a heartbeat and end the active turn while waiting. Do not manually poll.
@@ -159,7 +159,7 @@ Repair prompt must include:
 Worker repair callback template:
 
 ```text
-我是 worker，我的 session/thread id 是 <id or thread id not exposed>。Orchestrator thread id: <orchestrator-id>. 我这一轮 reviewer findings 修复已经完成。Base commit: <base>. Previous review head: <old>. New head commit: <new>. Fixed findings: <brief>. Verification: <commands/results>. Known gaps: <none or list>. 请 orchestrator 安排 same reviewer focused re-review。
+I am the worker. My session/thread id is <id or thread id not exposed>. Orchestrator thread id: <orchestrator-id>. Reviewer findings repair is complete. Base commit: <base>. Previous review head: <old>. New head commit: <new>. Fixed findings: <brief>. Verification: <commands/results>. Known gaps: <none or list>. Please arrange same-reviewer focused re-review.
 ```
 
 Create or update a heartbeat and end the active turn.

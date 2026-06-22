@@ -1,0 +1,18 @@
+{
+  "name": "compound-converge",
+  "owner": {
+    "name": "gomilesfd",
+    "url": "https://github.com/gomilesfd"
+  },
+  "metadata": {
+    "description": "Cursor plugin marketplace for Compound Converge base workflow skills",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "compound-converge",
+      "source": "./plugins/generic",
+      "description": "Base fresh-reviewer workflow skills for planning, implementation, and review."
+    }
+  ]
+}

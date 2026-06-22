@@ -1,0 +1,19 @@
+{
+  "name": "compound-converge",
+  "version": "0.1.0",
+  "description": "Fresh-reviewer convergence workflow skills for planning, implementation, and review.",
+  "author": {
+    "name": "gomilesfd",
+    "url": "https://github.com/gomilesfd"
+  },
+  "homepage": "https://github.com/gomilesfd/compound-converge",
+  "repository": "https://github.com/gomilesfd/compound-converge",
+  "license": "MIT",
+  "keywords": [
+    "agent-skills",
+    "claude-code",
+    "compound-engineering",
+    "fresh-reviewer",
+    "workflow-automation"
+  ]
+}
