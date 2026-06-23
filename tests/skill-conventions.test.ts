@@ -109,4 +109,28 @@ describe("skill conventions", () => {
       expect(contentAfterMarker(content, "## Non-Negotiable Protocol Gates"), relativePath).toBe(canonical)
     }
   })
+
+  test("canonical multi-session protocol preserves hard orchestration gates", () => {
+    const canonical = contentAfterMarker(
+      readFileSync(path.join(ROOT, PLATFORM_SKILL_ROOTS.source, "multi-session", "SKILL.md"), "utf8"),
+      "## Non-Negotiable Protocol Gates",
+    )
+
+    for (const requiredText of [
+      "Use `create_thread` to create a new specialist thread unless the user explicitly named an existing Codex thread.",
+      "Use `send_message_to_thread` to continue an existing specialist thread.",
+      "Use `read_thread` to verify every specialist thread id immediately after creation or selection.",
+      "Do not use multi-agent subagents, task agents, context-fork agents, local shell jobs, or background processes as substitutes.",
+      "If `read_thread` cannot read the id, stop the workflow and retry with Codex thread tools or report a tool-layer blocker.",
+      "The specialist must send its callback to the orchestrator thread.",
+      "Destination orchestrator Codex thread id: <orchestrator-thread-id>",
+      "Do not emulate a heartbeat with `sleep`, repeated `read_thread`, shell loops, timers, or repeated status checks in the same assistant turn.",
+      "do not replace the missing heartbeat with manual polling.",
+      "Same-reviewer pass is never the final exit condition.",
+      "Plan-review blockers return to the planner with the `plan-review-feedback` skill.",
+      "Code-review blockers return to the worker with the `code-review-feedback` skill.",
+    ]) {
+      expect(canonical).toContain(requiredText)
+    }
+  })
 })
