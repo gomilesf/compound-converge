@@ -170,6 +170,13 @@ Gemini CLI:
 gemini extensions install "$PWD"
 ```
 
+## License and Attribution
+
+Compound Converge is MIT licensed. Portions of the skill and agent prompt
+content are adapted from the MIT-licensed
+[Compound Engineering](https://github.com/EveryInc/compound-engineering-plugin)
+plugin. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
 ## Repository Layout
 
 ```text
