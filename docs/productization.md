@@ -23,7 +23,7 @@ repo root
 `-- docs/               specs, plans, and solution notes
 ```
 
-That root-native shape works when every platform should receive the same skills. Compound Converge has a different constraint: `plan-loop`, `build-loop`, and `multi-session` depend on Codex thread tools, callback transport, heartbeat handoff, and fresh-reviewer gates. They must not be exposed as Claude, Cursor, OpenCode, Pi, or Gemini skills.
+That root-native shape works when every platform should receive the same skills. Compound Converge has a different constraint: `cvg-plan-loop`, `cvg-build-loop`, and `cvg-multi-session` depend on Codex thread tools, callback transport, heartbeat handoff, and fresh-reviewer gates. They must not be exposed as Claude, Cursor, OpenCode, Pi, or Gemini skills.
 
 ## Target Architecture
 
@@ -32,21 +32,26 @@ Compound Converge therefore keeps one repository but uses separate platform plug
 ```text
 compound-converge
 |-- skills-src/
-|   |-- plan/
-|   |-- plan-review/
-|   |-- plan-review-feedback/
-|   |-- work/
-|   |-- code-review/
-|   |-- code-review-feedback/
-|   |-- plan-loop/
-|   |-- build-loop/
-|   `-- multi-session/
+|   |-- cvg-plan/
+|   |-- cvg-plan-review/
+|   |-- cvg-plan-review-feedback/
+|   |-- cvg-work/
+|   |-- cvg-code-review/
+|   |-- cvg-code-review-feedback/
+|   |-- cvg-plan-loop/
+|   |-- cvg-build-loop/
+|   `-- cvg-multi-session/
+|-- agents-src/
+|   |-- claude/          auxiliary agents as Claude agent markdown
+|   `-- codex/           auxiliary agents as Codex TOML
 |-- plugins/
 |   |-- codex/
 |   |   |-- .codex-plugin/plugin.json
+|   |   |-- .codex/agents/compound-converge/
 |   |   `-- skills/        all nine skills
 |   |-- claude/
 |   |   |-- .claude-plugin/plugin.json
+|   |   |-- agents/        auxiliary Claude agents
 |   |   `-- skills/        six base skills
 |   `-- generic/
 |       |-- .cursor-plugin/plugin.json
@@ -72,9 +77,28 @@ Native plugin loaders discover skills from a plugin root. Compound Converge uses
 - Codex marketplace source points at `./plugins/codex`, whose `.codex-plugin/plugin.json` points at `./skills/` and exposes all nine skills.
 - Cursor, OpenCode, Pi, and Gemini-facing surfaces use the base-only generated skills under `./plugins/generic/skills`.
 
+### Auxiliary agents are vendored as a minimal closure
+
+The base DD-derived skills dispatch a small set of Compound Engineering auxiliary agents. Compound Converge vendors only the agents directly referenced by its public skills:
+
+```text
+cvg-best-practices-researcher
+cvg-repo-research-analyst
+cvg-feasibility-reviewer
+cvg-security-lens-reviewer
+cvg-scope-guardian-reviewer
+cvg-correctness-reviewer
+cvg-testing-reviewer
+cvg-security-reviewer
+cvg-adversarial-reviewer
+cvg-reliability-reviewer
+```
+
+Claude Code receives these under `plugins/claude/agents/*.agent.md`. Codex receives the equivalent TOML agents under `plugins/codex/.codex/agents/compound-converge/*.toml`. Generic hosts still receive the base skills; when auxiliary delegation is unavailable, the skills instruct the active agent to perform the same checks itself.
+
 ### Generated skill roots are committed
 
-`skills-src/` is the canonical source tree. `scripts/sync-platform-skills.ts` generates the platform roots:
+`skills-src/` and `agents-src/` are the canonical source trees. `scripts/sync-platform-skills.ts` generates the platform roots:
 
 ```bash
 bun run sync
@@ -88,14 +112,18 @@ The generated roots are committed because users install directly from GitHub and
 
 ```text
 skills-src/               9 skills
+agents-src/claude         10 agents
+agents-src/codex          10 agents
 plugins/codex/skills      9 skills
+plugins/codex/.codex      10 agents
 plugins/claude/skills     6 skills
+plugins/claude/agents     10 agents
 plugins/generic/skills    6 skills
 ```
 
 ### Self-contained skills
 
-Marketplace installs use versioned cache directories. A skill cannot rely on sibling skill paths such as `../multi-session/SKILL.md`. When loop skills need the multi-session protocol, they carry a skill-local copy under `references/multi-session-protocol.md`.
+Marketplace installs use versioned cache directories. A skill cannot rely on sibling skill paths such as `../cvg-multi-session/SKILL.md`. When loop skills need the cvg-multi-session protocol, they carry a skill-local copy under `references/cvg-multi-session-protocol.md`.
 
 ## Verification
 

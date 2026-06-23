@@ -2,8 +2,10 @@ import { describe, expect, test } from "bun:test"
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs"
 import path from "node:path"
 import {
+  AUXILIARY_AGENT_NAMES,
   BASE_SKILLS,
   CODEX_SKILLS,
+  PLATFORM_AGENT_ROOTS,
   PLATFORM_SKILL_ROOTS,
   validateProductization,
 } from "../src/metadata"
@@ -22,6 +24,15 @@ function listSkillDirs(relativeRoot: string): string[] {
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
     .filter((name) => existsSync(path.join(ROOT, relativeRoot, name, "SKILL.md")))
+    .sort()
+}
+
+function listAgentNames(relativeRoot: string, extension: ".agent.md" | ".toml"): string[] {
+  return readdirSync(path.join(ROOT, relativeRoot), { withFileTypes: true })
+    .filter((entry) => entry.isFile())
+    .map((entry) => entry.name)
+    .filter((name) => name.endsWith(extension))
+    .map((name) => name.slice(0, -extension.length))
     .sort()
 }
 
@@ -57,6 +68,22 @@ function expectSkillCopyMatchesSource(skillName: string, targetRoot: string): vo
   }
 }
 
+function expectAgentCopiesMatchSource(
+  sourceRoot: string,
+  targetRoot: string,
+  extension: ".agent.md" | ".toml",
+): void {
+  expect(listAgentNames(sourceRoot, extension), sourceRoot).toEqual(AUXILIARY_AGENT_NAMES)
+  expect(listAgentNames(targetRoot, extension), targetRoot).toEqual(AUXILIARY_AGENT_NAMES)
+
+  for (const agentName of AUXILIARY_AGENT_NAMES) {
+    const fileName = `${agentName}${extension}`
+    const sourceContent = readFileSync(path.join(ROOT, sourceRoot, fileName), "utf8")
+    const targetContent = readFileSync(path.join(ROOT, targetRoot, fileName), "utf8")
+    expect(targetContent, `${targetRoot}/${fileName}`).toBe(sourceContent)
+  }
+}
+
 describe("plugin metadata", () => {
   test("ships the expected package and platform metadata files", () => {
     for (const relativePath of [
@@ -67,6 +94,10 @@ describe("plugin metadata", () => {
       "plugins/claude/.claude-plugin/plugin.json",
       "plugins/codex/.codex-plugin/plugin.json",
       "plugins/generic/.cursor-plugin/plugin.json",
+      "agents-src/claude",
+      "agents-src/codex",
+      "plugins/claude/agents",
+      "plugins/codex/.codex/agents/compound-converge",
       "gemini-extension.json",
       ".opencode/plugins/compound-converge.js",
       ".pi/extensions/compound-converge.ts",
@@ -138,6 +169,13 @@ describe("plugin metadata", () => {
     expect(existsSync(path.join(ROOT, "skills"))).toBe(false)
   })
 
+  test("declares auxiliary agent surfaces for supported agent hosts", () => {
+    expect(listAgentNames(PLATFORM_AGENT_ROOTS.sourceClaude, ".agent.md")).toEqual(AUXILIARY_AGENT_NAMES)
+    expect(listAgentNames(PLATFORM_AGENT_ROOTS.sourceCodex, ".toml")).toEqual(AUXILIARY_AGENT_NAMES)
+    expect(listAgentNames(PLATFORM_AGENT_ROOTS.claude, ".agent.md")).toEqual(AUXILIARY_AGENT_NAMES)
+    expect(listAgentNames(PLATFORM_AGENT_ROOTS.codex, ".toml")).toEqual(AUXILIARY_AGENT_NAMES)
+  })
+
   test("keeps generated skill copies in sync with source skills", () => {
     for (const skillName of CODEX_SKILLS) {
       expectSkillCopyMatchesSource(skillName, PLATFORM_SKILL_ROOTS.codex)
@@ -146,6 +184,11 @@ describe("plugin metadata", () => {
       expectSkillCopyMatchesSource(skillName, PLATFORM_SKILL_ROOTS.claude)
       expectSkillCopyMatchesSource(skillName, PLATFORM_SKILL_ROOTS.generic)
     }
+  })
+
+  test("keeps generated agent copies in sync with source agents", () => {
+    expectAgentCopiesMatchSource(PLATFORM_AGENT_ROOTS.sourceClaude, PLATFORM_AGENT_ROOTS.claude, ".agent.md")
+    expectAgentCopiesMatchSource(PLATFORM_AGENT_ROOTS.sourceCodex, PLATFORM_AGENT_ROOTS.codex, ".toml")
   })
 
   test("keeps marketplace plugin lists and platform sources aligned", () => {

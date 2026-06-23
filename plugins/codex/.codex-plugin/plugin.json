@@ -20,7 +20,7 @@
   "interface": {
     "displayName": "Compound Converge",
     "shortDescription": "Fresh-reviewer workflow skills for planning, implementation, and review loops.",
-    "longDescription": "Compound Converge packages the fresh-reviewer convergence protocol as native agent skills. Use plan and plan-review to stabilize a plan, work and code-review to stabilize an implementation, and Codex-only loop skills to coordinate real specialist threads with callback transport, heartbeat waiting, step-back classification, and a final fresh-reviewer exit gate.",
+    "longDescription": "Compound Converge packages the fresh-reviewer convergence protocol as native agent skills. Use cvg-plan and cvg-plan-review to stabilize a plan, cvg-work and cvg-code-review to stabilize an implementation, and Codex-only loop skills to coordinate real specialist threads with callback transport, heartbeat waiting, step-back classification, and a final fresh-reviewer exit gate.",
     "developerName": "gomilesfd",
     "category": "Coding",
     "capabilities": [
@@ -30,9 +30,9 @@
     ],
     "websiteURL": "https://github.com/gomilesfd/compound-converge",
     "defaultPrompt": [
-      "/plan-loop create a plan for the issue",
-      "/build-loop docs/plans/example-plan.md",
-      "/code-review review my implementation against the plan"
+      "/cvg-plan-loop create a plan for the issue",
+      "/cvg-build-loop docs/plans/example-plan.md",
+      "/cvg-code-review review my implementation against the plan"
     ],
     "screenshots": []
   }

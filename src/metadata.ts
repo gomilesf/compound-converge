@@ -39,14 +39,32 @@ type MarketplaceManifest = {
 
 const PLUGIN_NAME = "compound-converge"
 const EXPECTED_REPOSITORY = "https://github.com/gomilesfd/compound-converge"
-export const BASE_SKILLS = ["code-review", "code-review-feedback", "plan", "plan-review", "plan-review-feedback", "work"].sort()
-export const CODEX_ONLY_SKILLS = ["build-loop", "multi-session", "plan-loop"].sort()
+export const BASE_SKILLS = ["cvg-code-review", "cvg-code-review-feedback", "cvg-plan", "cvg-plan-review", "cvg-plan-review-feedback", "cvg-work"].sort()
+export const CODEX_ONLY_SKILLS = ["cvg-build-loop", "cvg-multi-session", "cvg-plan-loop"].sort()
 export const CODEX_SKILLS = [...BASE_SKILLS, ...CODEX_ONLY_SKILLS].sort()
+export const AUXILIARY_AGENT_NAMES = [
+  "cvg-adversarial-reviewer",
+  "cvg-best-practices-researcher",
+  "cvg-correctness-reviewer",
+  "cvg-feasibility-reviewer",
+  "cvg-reliability-reviewer",
+  "cvg-repo-research-analyst",
+  "cvg-scope-guardian-reviewer",
+  "cvg-security-lens-reviewer",
+  "cvg-security-reviewer",
+  "cvg-testing-reviewer",
+].sort()
 export const PLATFORM_SKILL_ROOTS = {
   source: "skills-src",
   codex: "plugins/codex/skills",
   claude: "plugins/claude/skills",
   generic: "plugins/generic/skills",
+} as const
+export const PLATFORM_AGENT_ROOTS = {
+  sourceClaude: "agents-src/claude",
+  sourceCodex: "agents-src/codex",
+  codex: "plugins/codex/.codex/agents/compound-converge",
+  claude: "plugins/claude/agents",
 } as const
 
 const REQUIRED_FILES = [
@@ -57,6 +75,10 @@ const REQUIRED_FILES = [
   "plugins/claude/.claude-plugin/plugin.json",
   "plugins/codex/.codex-plugin/plugin.json",
   "plugins/generic/.cursor-plugin/plugin.json",
+  "agents-src/claude",
+  "agents-src/codex",
+  "plugins/claude/agents",
+  "plugins/codex/.codex/agents/compound-converge",
   "gemini-extension.json",
   ".opencode/plugins/compound-converge.js",
   ".pi/extensions/compound-converge.ts",
@@ -162,6 +184,43 @@ async function validateSkillSurface(
   }
 }
 
+export async function listAgentFiles(
+  root: string,
+  relativeRoot: string,
+  extension: ".agent.md" | ".toml",
+): Promise<string[]> {
+  const agentRoot = path.join(root, relativeRoot)
+  const entries = await fs.readdir(agentRoot, { withFileTypes: true })
+  const suffixLength = extension.length
+  const agentNames: string[] = []
+
+  for (const entry of entries) {
+    if (!entry.isFile() || !entry.name.endsWith(extension)) continue
+    agentNames.push(entry.name.slice(0, -suffixLength))
+  }
+
+  return agentNames.sort()
+}
+
+async function validateAgentSurface(
+  root: string,
+  errors: string[],
+  relativeRoot: string,
+  extension: ".agent.md" | ".toml",
+): Promise<void> {
+  let agents: string[]
+  try {
+    agents = await listAgentFiles(root, relativeRoot, extension)
+  } catch (err: unknown) {
+    errors.push(`${relativeRoot}: could not read agents: ${(err as Error).message}`)
+    return
+  }
+
+  if (!sameList(agents, AUXILIARY_AGENT_NAMES)) {
+    errors.push(`${relativeRoot}: expected ${AUXILIARY_AGENT_NAMES.join(", ")}, found ${agents.join(", ")}`)
+  }
+}
+
 function marketplaceSourcePath(plugin: MarketplaceManifest["plugins"][number] | undefined): string | undefined {
   const source = plugin?.source
   if (typeof source === "string") return source
@@ -240,6 +299,10 @@ export async function validateProductization(root = process.cwd()): Promise<Prod
   await validateSkillSurface(root, errors, PLATFORM_SKILL_ROOTS.codex, CODEX_SKILLS)
   await validateSkillSurface(root, errors, PLATFORM_SKILL_ROOTS.claude, BASE_SKILLS)
   await validateSkillSurface(root, errors, PLATFORM_SKILL_ROOTS.generic, BASE_SKILLS)
+  await validateAgentSurface(root, errors, PLATFORM_AGENT_ROOTS.sourceClaude, ".agent.md")
+  await validateAgentSurface(root, errors, PLATFORM_AGENT_ROOTS.sourceCodex, ".toml")
+  await validateAgentSurface(root, errors, PLATFORM_AGENT_ROOTS.claude, ".agent.md")
+  await validateAgentSurface(root, errors, PLATFORM_AGENT_ROOTS.codex, ".toml")
 
   const claudeMarketplace = await readJson<MarketplaceManifest>(
     root,

@@ -7,26 +7,43 @@ The core idea is simple: the session that wrote the plan or code should not be t
 ## Workflow
 
 ```text
-plan -> plan-review -> revise until stable
-work -> code-review -> repair until stable
+cvg-plan -> cvg-plan-review -> revise until stable
+cvg-work -> cvg-code-review -> repair until stable
 final fresh review -> done
 ```
 
 The base skills work across supported agent hosts. The loop skills are Codex-only because they coordinate real Codex threads, callback transport, heartbeat waiting, and final fresh-reviewer gates.
 
+The planning and review skills also ship a small auxiliary reviewer/researcher agent set extracted from the local DD workflow. These agents are packaged for Claude Code and Codex so references such as `cvg-correctness-reviewer` and `cvg-best-practices-researcher` resolve without requiring the full Compound Engineering plugin.
+
 ## Skills
 
 | Skill | Purpose | Best fit |
 | --- | --- | --- |
-| `/plan` | Read an issue and codebase, then write a sliced plan with an invariant matrix when needed | Claude Code, Codex |
-| `/plan-review` | Review a plan against the actual codebase for missing surfaces, incomplete slices, and wrong invariants | Claude Code, Codex |
-| `/plan-review-feedback` | Handle plan-review blockers inside the planner session before revising plan-owned artifacts | Claude Code, Codex |
-| `/work` | Execute a plan slice by slice with TDD and implementation notes | Claude Code, Codex |
-| `/code-review` | Review implementation against the plan and contract, separating code bugs from contract gaps | Claude Code, Codex |
-| `/code-review-feedback` | Handle code-review blockers inside the worker session before repairing implementation-owned issues | Claude Code, Codex |
-| `/plan-loop` | Orchestrate the plan -> fresh plan-review loop across real Codex threads | Codex |
-| `/build-loop` | Orchestrate worker -> fresh code-review -> repair -> final fresh-review across real Codex threads | Codex |
-| `/multi-session` | Shared Codex multi-thread protocol for specialist handoff, callbacks, heartbeat waiting, and exit gates | Codex |
+| `/cvg-plan` | Read an issue and codebase, then write a sliced plan with an invariant matrix when needed | Claude Code, Codex |
+| `/cvg-plan-review` | Review a plan against the actual codebase for missing surfaces, incomplete slices, and wrong invariants | Claude Code, Codex |
+| `/cvg-plan-review-feedback` | Handle cvg-plan-review blockers inside the planner session before revising plan-owned artifacts | Claude Code, Codex |
+| `/cvg-work` | Execute a plan slice by slice with TDD and implementation notes | Claude Code, Codex |
+| `/cvg-code-review` | Review implementation against the plan and contract, separating code bugs from contract gaps | Claude Code, Codex |
+| `/cvg-code-review-feedback` | Handle cvg-code-review blockers inside the worker session before repairing implementation-owned issues | Claude Code, Codex |
+| `/cvg-plan-loop` | Orchestrate the plan -> fresh cvg-plan-review loop across real Codex threads | Codex |
+| `/cvg-build-loop` | Orchestrate worker -> fresh cvg-code-review -> repair -> final fresh-review across real Codex threads | Codex |
+| `/cvg-multi-session` | Shared Codex multi-thread protocol for specialist handoff, callbacks, heartbeat waiting, and exit gates | Codex |
+
+## Auxiliary Agents
+
+| Agent | Used by |
+| --- | --- |
+| `cvg-best-practices-researcher` | `/cvg-plan` |
+| `cvg-repo-research-analyst` | `/cvg-plan` |
+| `cvg-feasibility-reviewer` | `/cvg-plan-review` |
+| `cvg-security-lens-reviewer` | `/cvg-plan-review` |
+| `cvg-scope-guardian-reviewer` | `/cvg-plan-review` |
+| `cvg-correctness-reviewer` | `/cvg-code-review` |
+| `cvg-testing-reviewer` | `/cvg-code-review` |
+| `cvg-security-reviewer` | `/cvg-code-review` |
+| `cvg-adversarial-reviewer` | `/cvg-code-review` |
+| `cvg-reliability-reviewer` | `/cvg-code-review` |
 
 ## Install
 
@@ -37,7 +54,7 @@ The base skills work across supported agent hosts. The loop skills are Codex-onl
 /plugin install compound-converge
 ```
 
-The Claude plugin exposes only the six base skills: `/plan`, `/plan-review`, `/plan-review-feedback`, `/work`, `/code-review`, and `/code-review-feedback`.
+The Claude plugin exposes only the six base skills: `/cvg-plan`, `/cvg-plan-review`, `/cvg-plan-review-feedback`, `/cvg-work`, `/cvg-code-review`, and `/cvg-code-review-feedback`.
 
 ### Codex App
 
@@ -157,18 +174,19 @@ gemini extensions install "$PWD"
 
 ```text
 skills-src/        Canonical skill sources
-plugins/codex/    Codex plugin root with all nine skills
-plugins/claude/   Claude Code plugin root with six base skills
-plugins/generic/  Base-only skill root for generic hosts
-.claude-plugin/   Claude Code marketplace metadata
-.agents/plugins/  Codex custom marketplace descriptor
-.cursor-plugin/   Cursor marketplace metadata
-.opencode/        OpenCode package entrypoint
-.pi/              Pi extension entrypoint
-src/              Productization validation library
-scripts/          Sync and validation text interfaces
-tests/            Metadata and skill convention tests
-docs/             Productization notes
+agents-src/        Canonical auxiliary agent sources
+plugins/codex/     Codex plugin root with all nine skills and Codex agents
+plugins/claude/    Claude Code plugin root with six base skills and Claude agents
+plugins/generic/   Base-only skill root for generic hosts
+.claude-plugin/    Claude Code marketplace metadata
+.agents/plugins/   Codex custom marketplace descriptor
+.cursor-plugin/    Cursor marketplace metadata
+.opencode/         OpenCode package entrypoint
+.pi/               Pi extension entrypoint
+src/               Productization validation library
+scripts/           Sync and validation text interfaces
+tests/             Metadata and skill convention tests
+docs/              Productization notes
 ```
 
 ## License

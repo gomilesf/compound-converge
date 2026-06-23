@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test"
 import { readdirSync, readFileSync } from "node:fs"
 import path from "node:path"
-import { PLATFORM_SKILL_ROOTS } from "../src/metadata"
+import { AUXILIARY_AGENT_NAMES, PLATFORM_SKILL_ROOTS } from "../src/metadata"
 
 const ROOT = process.cwd()
 const NAME_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
@@ -60,6 +60,17 @@ function contentAfterMarker(content: string, marker: string): string {
   return content.slice(start).trimEnd()
 }
 
+function referencedAuxiliaryAgents(): string[] {
+  const agentRefs = new Set<string>()
+  for (const skill of listSkills()) {
+    for (const match of skill.content.matchAll(/`(cvg-[a-z0-9-]+(?:reviewer|researcher|analyst))`/g)) {
+      agentRefs.add(match[1])
+    }
+  }
+
+  return [...agentRefs].sort()
+}
+
 describe("skill conventions", () => {
   test("every skill has portable frontmatter", () => {
     for (const skill of listSkills()) {
@@ -92,17 +103,21 @@ describe("skill conventions", () => {
     }
   })
 
-  test("loop protocol references preserve canonical multi-session gates", () => {
+  test("skill auxiliary agent references are packaged", () => {
+    expect(referencedAuxiliaryAgents()).toEqual(AUXILIARY_AGENT_NAMES)
+  })
+
+  test("loop protocol references preserve canonical cvg-multi-session gates", () => {
     const canonical = contentAfterMarker(
-      readFileSync(path.join(ROOT, PLATFORM_SKILL_ROOTS.source, "multi-session", "SKILL.md"), "utf8"),
+      readFileSync(path.join(ROOT, PLATFORM_SKILL_ROOTS.source, "cvg-multi-session", "SKILL.md"), "utf8"),
       "## Non-Negotiable Protocol Gates",
     )
 
     for (const relativePath of [
-      path.join(PLATFORM_SKILL_ROOTS.source, "plan-loop", "references", "multi-session-protocol.md"),
-      path.join(PLATFORM_SKILL_ROOTS.source, "build-loop", "references", "multi-session-protocol.md"),
-      path.join(PLATFORM_SKILL_ROOTS.codex, "plan-loop", "references", "multi-session-protocol.md"),
-      path.join(PLATFORM_SKILL_ROOTS.codex, "build-loop", "references", "multi-session-protocol.md"),
+      path.join(PLATFORM_SKILL_ROOTS.source, "cvg-plan-loop", "references", "cvg-multi-session-protocol.md"),
+      path.join(PLATFORM_SKILL_ROOTS.source, "cvg-build-loop", "references", "cvg-multi-session-protocol.md"),
+      path.join(PLATFORM_SKILL_ROOTS.codex, "cvg-plan-loop", "references", "cvg-multi-session-protocol.md"),
+      path.join(PLATFORM_SKILL_ROOTS.codex, "cvg-build-loop", "references", "cvg-multi-session-protocol.md"),
     ]) {
       const content = readFileSync(path.join(ROOT, relativePath), "utf8")
 
@@ -110,9 +125,9 @@ describe("skill conventions", () => {
     }
   })
 
-  test("canonical multi-session protocol preserves hard orchestration gates", () => {
+  test("canonical cvg-multi-session protocol preserves hard orchestration gates", () => {
     const canonical = contentAfterMarker(
-      readFileSync(path.join(ROOT, PLATFORM_SKILL_ROOTS.source, "multi-session", "SKILL.md"), "utf8"),
+      readFileSync(path.join(ROOT, PLATFORM_SKILL_ROOTS.source, "cvg-multi-session", "SKILL.md"), "utf8"),
       "## Non-Negotiable Protocol Gates",
     )
 
@@ -127,8 +142,8 @@ describe("skill conventions", () => {
       "Do not emulate a heartbeat with `sleep`, repeated `read_thread`, shell loops, timers, or repeated status checks in the same assistant turn.",
       "do not replace the missing heartbeat with manual polling.",
       "Same-reviewer pass is never the final exit condition.",
-      "Plan-review blockers return to the planner with the `plan-review-feedback` skill.",
-      "Code-review blockers return to the worker with the `code-review-feedback` skill.",
+      "Plan-review blockers return to the planner with the `cvg-plan-review-feedback` skill.",
+      "Code-review blockers return to the worker with the `cvg-code-review-feedback` skill.",
     ]) {
       expect(canonical).toContain(requiredText)
     }

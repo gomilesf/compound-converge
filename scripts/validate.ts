@@ -1,8 +1,11 @@
 #!/usr/bin/env bun
 import {
+  AUXILIARY_AGENT_NAMES,
   BASE_SKILLS,
   CODEX_SKILLS,
+  PLATFORM_AGENT_ROOTS,
   PLATFORM_SKILL_ROOTS,
+  listAgentFiles,
   listSkillDirectories,
   validateProductization,
 } from "../src/metadata"
@@ -25,6 +28,8 @@ for (const warning of result.warnings) {
 const sourceSkills = await listSkillDirectories(root, PLATFORM_SKILL_ROOTS.source)
 const codexSkills = await listSkillDirectories(root, PLATFORM_SKILL_ROOTS.codex)
 const claudeSkills = await listSkillDirectories(root, PLATFORM_SKILL_ROOTS.claude)
+const codexAgents = await listAgentFiles(root, PLATFORM_AGENT_ROOTS.codex, ".toml")
+const claudeAgents = await listAgentFiles(root, PLATFORM_AGENT_ROOTS.claude, ".agent.md")
 
 console.log(
   [
@@ -32,5 +37,7 @@ console.log(
     `source=${sourceSkills.length}/${CODEX_SKILLS.length}`,
     `codex=${codexSkills.length}/${CODEX_SKILLS.length}`,
     `claude=${claudeSkills.length}/${BASE_SKILLS.length}`,
+    `codexAgents=${codexAgents.length}/${AUXILIARY_AGENT_NAMES.length}`,
+    `claudeAgents=${claudeAgents.length}/${AUXILIARY_AGENT_NAMES.length}`,
   ].join(" "),
 )
