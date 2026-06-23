@@ -13,7 +13,7 @@ Before doing anything, open and read `references/multi-session-protocol.md`, the
 - real Codex thread gate,
 - orchestrator callback transport gate,
 - heartbeat handoff gate,
-- actor-local review-feedback gate,
+- plan-review-feedback gate,
 - fresh-reviewer exit gate.
 
 Do not implement product code in this workflow.
@@ -114,14 +114,14 @@ The feedback prompt must include:
 
 - destination orchestrator Codex thread id,
 - reviewer thread id,
-- exact reviewer findings,
-- required feedback skill: `review-feedback`,
+- required feedback skill: `plan-review-feedback`,
 - original planning goal and source prompt,
 - current plan path and related contracts,
-- instruction to run `review-feedback` and produce its intake summary before editing,
-- instruction to revise only findings routed to planning by `review-feedback`,
-- instruction to callback instead of editing when `review-feedback` routes a finding to contract decision, reviewer clarification, or escalation,
-- instruction to run the gates selected by `review-feedback`,
+- exact reviewer blocker findings appended under a `Plan Review Feedback Input` section,
+- instruction to produce the `plan-review-feedback` intake summary before editing,
+- instruction to revise only valid plan-owned findings,
+- instruction to callback instead of editing when a missing behavior decision or reviewer clarification is required,
+- instruction to run the gates selected by `plan-review-feedback`,
 - unchanged scope boundaries,
 - callback transport block,
 - callback template.
@@ -166,7 +166,7 @@ Report:
 - planner thread id,
 - reviewer thread ids,
 - callback transport status,
-- blockers and planner `review-feedback` results,
+- blockers and planner `plan-review-feedback` results,
 - final fresh reviewer verdict,
 - heartbeat cleanup,
 - known gaps.

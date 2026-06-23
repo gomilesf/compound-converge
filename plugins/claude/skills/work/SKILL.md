@@ -136,21 +136,22 @@ Only after the self-check passes, declare the implementation ready for review.
 
 ## When you receive code review feedback
 
-Before editing code, run the `review-feedback` skill on the reviewer findings and
-the current plan, contract, implementation notes, and diff.
+Before editing code, run the `code-review-feedback` skill. The input is the
+reviewer blocker findings appended to the prompt, plus the current plan,
+contract, implementation notes, diff, and changed files.
 
 Do not treat reviewer findings as a patch list. First produce the
-`review-feedback` intake summary, then repair only findings routed to
-implementation. If the feedback is routed to plan revision, contract decision,
-reviewer clarification, or escalation, callback through the coordination channel
-instead of patching around the missing decision.
+`code-review-feedback` intake summary, then repair only implementation-owned
+findings under the accepted plan and contract. If the feedback exposes a plan
+gap, contract gap, systemic design gap, or reviewer clarification need, callback
+through the coordination channel instead of patching around the missing decision.
 
 When feedback exposes a plan gap, contract gap, or systemic design gap, stop.
 Workers do not edit plans, contracts, surface matrices, or scope, and must not
 continue implementation until the planner or coordination channel resolves the
 gap.
 
-After repair, include the `review-feedback` result, fixed findings, verification
+After repair, include the `code-review-feedback` result, fixed findings, verification
 gates, and remaining blockers in the callback or final implementation result.
 
 ## When you discover a contract gap

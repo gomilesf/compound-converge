@@ -189,17 +189,17 @@ are coherent enough for a worker to start without inventing missing behavior.
 
 ## When you receive plan review feedback
 
-Before editing the plan, run the `review-feedback` skill on the reviewer
-findings and the current goal, source prompt, plan, contract, and relevant
-codebase evidence.
+Before editing the plan, run the `plan-review-feedback` skill. The input is the
+reviewer blocker findings appended to the prompt, plus the current goal, source
+prompt, plan, contract, and relevant codebase evidence.
 
 Do not treat reviewer findings as an edit list. First produce the
-`review-feedback` intake summary, then revise only findings routed to planning.
-If the feedback is routed to contract decision, reviewer clarification, or
-escalation, callback through the coordination channel instead of rewriting the
+`plan-review-feedback` intake summary, then revise only valid plan-owned
+findings. If the feedback requires a missing behavior decision or reviewer
+clarification, callback through the coordination channel instead of rewriting the
 plan around an unresolved decision.
 
-After revision, include the `review-feedback` result, changed plan sections,
+After revision, include the `plan-review-feedback` result, changed plan sections,
 verification gates, and remaining blockers in the callback or final planning
 result.
 

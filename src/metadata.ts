@@ -39,7 +39,7 @@ type MarketplaceManifest = {
 
 const PLUGIN_NAME = "compound-converge"
 const EXPECTED_REPOSITORY = "https://github.com/gomilesfd/compound-converge"
-export const BASE_SKILLS = ["code-review", "plan", "plan-review", "review-feedback", "work"].sort()
+export const BASE_SKILLS = ["code-review", "code-review-feedback", "plan", "plan-review", "plan-review-feedback", "work"].sort()
 export const CODEX_ONLY_SKILLS = ["build-loop", "multi-session", "plan-loop"].sort()
 export const CODEX_SKILLS = [...BASE_SKILLS, ...CODEX_ONLY_SKILLS].sort()
 export const PLATFORM_SKILL_ROOTS = {

@@ -1,6 +1,6 @@
 ---
 name: multi-session
-description: Orchestrate monitored Codex thread workflows with specialist handoff, callback transport, heartbeat waiting, actor-local review feedback handling, and fresh-reviewer exit gates. Use when the user asks to coordinate multiple Codex sessions, run an orchestrator workflow, supervise planning or implementation, or manage worker/reviewer loops.
+description: Orchestrate monitored Codex thread workflows with specialist handoff, callback transport, heartbeat waiting, role-specific review feedback handling, and fresh-reviewer exit gates. Use when the user asks to coordinate multiple Codex sessions, run an orchestrator workflow, supervise planning or implementation, or manage worker/reviewer loops.
 argument-hint: "[goal, plan path, worktree, or workflow description]"
 ---
 
@@ -65,17 +65,19 @@ A heartbeat turn may do one status check. If the specialist is still active, rep
 
 Continue immediately only when an explicit callback is already present or `read_thread` already shows the specialist completed.
 
-### Gate 4: Actor-Local Review Feedback
+### Gate 4: Role-Specific Review Feedback
 
 Reviewer feedback returns to the same planner or worker thread that produced the reviewed artifact.
 
 The orchestrator must not classify findings, choose the repair route, filter reviewer output, or turn the review into a patch list.
 
-The actor prompt must require the `review-feedback` skill before edits. The actor is responsible for feedback intake, routing each finding, selecting verification gates, and reporting the intake result in its callback.
+Plan-review blockers return to the planner with the `plan-review-feedback` skill. The prompt must contain the exact reviewer blocker findings under a `Plan Review Feedback Input` section.
+
+Code-review blockers return to the worker with the `code-review-feedback` skill. The prompt must contain the exact reviewer blocker findings under a `Code Review Feedback Input` section.
 
 Role boundaries still apply: workers may repair implementation-owned findings only. Workers must stop and callback for plan gaps, contract gaps, systemic design gaps, reviewer clarification, or escalation. Only planners may produce plan or contract revisions.
 
-The orchestrator routes only after the actor callback reports a role-valid result: implementation repair from a worker, plan or contract revision from a planner, or a blocker that needs planner, reviewer, user, or escalation handling.
+The orchestrator continues only after the actor callback reports a role-valid result: implementation repair from a worker, plan or contract revision from a planner, or a blocker that needs planner, reviewer, user, or escalation handling.
 
 ### Gate 5: Fresh Reviewer Exit
 
@@ -84,7 +86,7 @@ Same-reviewer pass is never the final exit condition.
 The exit sequence is:
 
 1. Fresh reviewer performs a complete first review.
-2. If blockers exist, return feedback to the same planner or worker and require `review-feedback`.
+2. If blockers exist, return feedback to the same planner or worker and require the role-specific feedback skill.
 3. Same reviewer performs a focused re-review after the actor produces a reviewable update.
 4. If same reviewer passes, start a new fresh reviewer for another complete first review.
 5. Exit only when the new fresh reviewer reports no blocking findings.
@@ -120,7 +122,7 @@ Heartbeat prompts should say:
 
 - which specialist thread to check,
 - what callback shape to detect,
-- whether the actor completed `review-feedback` intake,
+- whether the actor completed the role-specific feedback intake,
 - if still active, report one short status and continue waiting,
 - do not busy-wait,
 - delete or update the heartbeat when the phase is complete or stale.
@@ -133,7 +135,7 @@ When the workflow completes, summarize:
 - specialist thread ids verified with `read_thread`,
 - callback transport status,
 - review loop results,
-- actor `review-feedback` results,
+- role-specific feedback results,
 - verification gates,
 - remaining known gaps,
 - heartbeat cleanup,

@@ -13,7 +13,7 @@ Before doing anything, open and read `references/multi-session-protocol.md`, the
 - real Codex thread gate,
 - orchestrator callback transport gate,
 - heartbeat handoff gate,
-- actor-local review-feedback gate,
+- code-review-feedback gate,
 - fresh-reviewer exit gate.
 
 ## Phase 0: Orchestrator Setup
@@ -125,15 +125,15 @@ Do not classify findings, choose repair strategy, filter reviewer output, or tur
 Feedback prompt must include:
 
 - destination orchestrator Codex thread id,
-- original reviewer findings exactly,
 - reviewer thread id,
-- required feedback skill: `review-feedback`,
+- required feedback skill: `code-review-feedback`,
 - plan, behavior contract, implementation notes, base commit, review head, and current head,
-- instruction to run `review-feedback` and produce its intake summary before editing,
-- instruction to repair only findings routed to implementation by `review-feedback`,
-- instruction to stop and callback instead of patching when `review-feedback` routes a finding to plan revision, contract decision, systemic design gap, reviewer clarification, or escalation,
+- exact reviewer blocker findings appended under a `Code Review Feedback Input` section,
+- instruction to produce the `code-review-feedback` intake summary before editing,
+- instruction to repair only implementation-owned findings under the accepted plan and contract,
+- instruction to stop and callback instead of patching when feedback exposes a plan gap, contract gap, systemic design gap, reviewer clarification need, or escalation need,
 - instruction that workers must never edit plans, contracts, surface matrices, or scope,
-- instruction to run the gates selected by `review-feedback`,
+- instruction to run the gates selected by `code-review-feedback`,
 - unchanged safety boundaries,
 - callback transport block,
 - callback template.
@@ -141,7 +141,7 @@ Feedback prompt must include:
 Worker feedback callback template:
 
 ```text
-I am the worker. My session/thread id is <id or thread id not exposed>. Orchestrator thread id: <orchestrator-id>. Reviewer feedback handling is complete. Base commit: <base>. Previous review head: <old>. New head commit: <new>. Review-feedback result: <repaired / plan or contract gap / escalation / clarification needed>. Fixed findings: <brief or none>. Verification: <commands/results>. Known gaps: <none or list>. Please arrange the next review step.
+I am the worker. My session/thread id is <id or thread id not exposed>. Orchestrator thread id: <orchestrator-id>. Code review feedback handling is complete. Base commit: <base>. Previous review head: <old>. New head commit: <new>. Code-review-feedback result: <repaired / plan gap / contract gap / systemic design gap / escalation / clarification needed>. Fixed findings: <brief or none>. Verification: <commands/results>. Known gaps: <none or list>. Please arrange the next review step.
 ```
 
 Create or update a heartbeat and end the active turn.
@@ -225,7 +225,7 @@ Report:
 - base commit and final head,
 - worker and reviewer thread ids verified with `read_thread`,
 - callback transport status,
-- review findings and worker `review-feedback` results,
+- review findings and worker `code-review-feedback` results,
 - repair commits,
 - final fresh reviewer result,
 - QA evidence and gates,
