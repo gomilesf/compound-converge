@@ -94,6 +94,7 @@ describe("plugin metadata", () => {
       "plugins/claude/.claude-plugin/plugin.json",
       "plugins/codex/.codex-plugin/plugin.json",
       "plugins/generic/.cursor-plugin/plugin.json",
+      "scripts/install-codex-agents.ts",
       "agents-src/claude",
       "agents-src/codex",
       "plugins/claude/agents",
@@ -112,6 +113,7 @@ describe("plugin metadata", () => {
       version: string
       repository: string
       main: string
+      scripts: Record<string, string>
       pi: { extensions: string[]; skills: string[] }
     }>("package.json")
     const claudePlugin = readJson<{ name: string; version: string; repository: string }>(
@@ -132,6 +134,7 @@ describe("plugin metadata", () => {
     expect(packageJson.version).toBe(EXPECTED_VERSION)
     expect(packageJson.repository).toBe(EXPECTED_REPOSITORY)
     expect(packageJson.main).toBe(".opencode/plugins/compound-converge.js")
+    expect(packageJson.scripts["install:codex-agents"]).toBe("bun run scripts/install-codex-agents.ts")
     expect(packageJson.pi.extensions).toEqual(["./.pi/extensions/compound-converge.ts"])
     expect(packageJson.pi.skills).toEqual(["./plugins/generic/skills"])
 

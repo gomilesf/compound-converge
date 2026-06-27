@@ -199,7 +199,14 @@ Compound Converge is installed as a custom plugin marketplace:
    | Sparse paths | leave blank |
 
 4. Click **Add marketplace**.
-5. Select **Compound Converge**, install **compound-converge**, then restart Codex.
+5. Select **Compound Converge** and install **compound-converge**.
+6. From this repository checkout, install the auxiliary Codex agents:
+
+   ```bash
+   bun run install:codex-agents
+   ```
+
+7. Restart Codex.
 
 ### Codex CLI
 
@@ -212,11 +219,18 @@ codex
 
 Inside Codex, run `/plugins`, choose **Compound Converge**, install **compound-converge**, then restart Codex.
 
+Install the auxiliary Codex agents from this repository checkout before restarting:
+
+```bash
+bun run install:codex-agents
+```
+
 For a non-default Codex profile, run each step against the same `CODEX_HOME`:
 
 ```bash
 CODEX_HOME="$HOME/.codex/profiles/work" codex plugin marketplace add gomilesfd/compound-converge
 CODEX_HOME="$HOME/.codex/profiles/work" codex
+CODEX_HOME="$HOME/.codex/profiles/work" bun run install:codex-agents
 ```
 
 ### Cursor

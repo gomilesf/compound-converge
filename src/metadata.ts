@@ -1,4 +1,5 @@
 import { promises as fs } from "node:fs"
+import os from "node:os"
 import path from "node:path"
 
 export type ProductizationValidation = {
@@ -11,6 +12,7 @@ type PackageJson = {
   version?: string
   repository?: string
   main?: string
+  scripts?: Record<string, string>
   pi?: {
     extensions?: string[]
     skills?: string[]
@@ -38,6 +40,7 @@ type MarketplaceManifest = {
 }
 
 const PLUGIN_NAME = "compound-converge"
+const CODEX_INSTALL_MANIFEST = "install-manifest.json"
 const EXPECTED_REPOSITORY = "https://github.com/gomilesfd/compound-converge"
 export const BASE_SKILLS = ["cvg-code-review", "cvg-code-review-feedback", "cvg-plan", "cvg-plan-review", "cvg-plan-review-feedback", "cvg-work"].sort()
 export const CODEX_ONLY_SKILLS = ["cvg-build-loop", "cvg-multi-session", "cvg-plan-loop"].sort()
@@ -67,6 +70,26 @@ export const PLATFORM_AGENT_ROOTS = {
   claude: "plugins/claude/agents",
 } as const
 
+export type CodexAgentInstallOptions = {
+  repoRoot?: string
+  codexRoot?: string
+}
+
+export type CodexAgentInstallResult = {
+  codexRoot: string
+  agentsRoot: string
+  manifestPath: string
+  agents: string[]
+}
+
+type CodexInstallManifest = {
+  version: 1
+  pluginName: string
+  skills: string[]
+  prompts: string[]
+  agents: string[]
+}
+
 const REQUIRED_FILES = [
   "package.json",
   ".claude-plugin/marketplace.json",
@@ -75,6 +98,7 @@ const REQUIRED_FILES = [
   "plugins/claude/.claude-plugin/plugin.json",
   "plugins/codex/.codex-plugin/plugin.json",
   "plugins/generic/.cursor-plugin/plugin.json",
+  "scripts/install-codex-agents.ts",
   "agents-src/claude",
   "agents-src/codex",
   "plugins/claude/agents",
@@ -98,6 +122,97 @@ async function pathExists(filePath: string): Promise<boolean> {
   } catch {
     return false
   }
+}
+
+export function resolveCodexRoot(codexRoot?: string): string {
+  return path.resolve(codexRoot || process.env.CODEX_HOME || path.join(os.homedir(), ".codex"))
+}
+
+export function expectedCodexAgentFiles(): string[] {
+  return AUXILIARY_AGENT_NAMES.map((agentName) => `${agentName}.toml`).sort()
+}
+
+export async function installCodexAgents(
+  options: CodexAgentInstallOptions = {},
+): Promise<CodexAgentInstallResult> {
+  const repoRoot = options.repoRoot ?? process.cwd()
+  const codexRoot = resolveCodexRoot(options.codexRoot)
+  const sourceRoot = path.join(repoRoot, PLATFORM_AGENT_ROOTS.codex)
+  const agentsRoot = path.join(codexRoot, "agents", PLUGIN_NAME)
+  const manifestPath = path.join(codexRoot, PLUGIN_NAME, CODEX_INSTALL_MANIFEST)
+  const agents = expectedCodexAgentFiles()
+
+  await fs.mkdir(agentsRoot, { recursive: true })
+  await cleanupRemovedCodexAgents(agentsRoot, manifestPath, agents)
+
+  for (const agentFile of agents) {
+    await fs.copyFile(path.join(sourceRoot, agentFile), path.join(agentsRoot, agentFile))
+  }
+
+  await fs.mkdir(path.dirname(manifestPath), { recursive: true })
+  await fs.writeFile(
+    manifestPath,
+    JSON.stringify({
+      version: 1,
+      pluginName: PLUGIN_NAME,
+      skills: CODEX_SKILLS,
+      prompts: [],
+      agents,
+    } satisfies CodexInstallManifest, null, 2) + "\n",
+  )
+
+  return { codexRoot, agentsRoot, manifestPath, agents }
+}
+
+async function cleanupRemovedCodexAgents(
+  agentsRoot: string,
+  manifestPath: string,
+  currentAgents: string[],
+): Promise<void> {
+  const manifest = await readCodexInstallManifest(manifestPath)
+  if (!manifest) return
+
+  const current = new Set(currentAgents)
+  for (const agentFile of manifest.agents) {
+    if (current.has(agentFile) || !isSafeCodexAgentEntry(agentFile)) continue
+    await fs.rm(path.join(agentsRoot, agentFile), { force: true })
+    await fs.rm(path.join(agentsRoot, path.basename(agentFile, ".toml")), { recursive: true, force: true })
+  }
+}
+
+async function readCodexInstallManifest(manifestPath: string): Promise<CodexInstallManifest | null> {
+  try {
+    const parsed = JSON.parse(await fs.readFile(manifestPath, "utf8")) as Partial<CodexInstallManifest>
+    if (
+      parsed.version === 1 &&
+      parsed.pluginName === PLUGIN_NAME &&
+      Array.isArray(parsed.skills) &&
+      Array.isArray(parsed.prompts) &&
+      Array.isArray(parsed.agents)
+    ) {
+      return {
+        version: 1,
+        pluginName: PLUGIN_NAME,
+        skills: parsed.skills.filter((entry): entry is string => typeof entry === "string"),
+        prompts: parsed.prompts.filter((entry): entry is string => typeof entry === "string"),
+        agents: parsed.agents.filter((entry): entry is string => typeof entry === "string"),
+      }
+    }
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== "ENOENT") {
+      throw err
+    }
+  }
+  return null
+}
+
+function isSafeCodexAgentEntry(agentFile: string): boolean {
+  return (
+    agentFile.endsWith(".toml") &&
+    path.basename(agentFile) === agentFile &&
+    !path.isAbsolute(agentFile) &&
+    !agentFile.includes("..")
+  )
 }
 
 async function readJson<T>(
@@ -253,6 +368,9 @@ export async function validateProductization(root = process.cwd()): Promise<Prod
 
   if (packageJson?.main !== ".opencode/plugins/compound-converge.js") {
     errors.push("package.json: main must point at the OpenCode plugin entrypoint")
+  }
+  if (packageJson?.scripts?.["install:codex-agents"] !== "bun run scripts/install-codex-agents.ts") {
+    errors.push("package.json: install:codex-agents must run scripts/install-codex-agents.ts")
   }
   if (JSON.stringify(packageJson?.pi?.extensions ?? []) !== JSON.stringify(["./.pi/extensions/compound-converge.ts"])) {
     errors.push("package.json: pi.extensions must expose the Pi extension")

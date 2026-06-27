@@ -94,7 +94,7 @@ cvg-adversarial-reviewer
 cvg-reliability-reviewer
 ```
 
-Claude Code receives these under `plugins/claude/agents/*.agent.md`. Codex receives the equivalent TOML agents under `plugins/codex/.codex/agents/compound-converge/*.toml`. Generic hosts still receive the base skills; when auxiliary delegation is unavailable, the skills instruct the active agent to perform the same checks itself.
+Claude Code receives these under `plugins/claude/agents/*.agent.md`. Codex keeps the equivalent TOML agents under `plugins/codex/.codex/agents/compound-converge/*.toml`, and `bun run install:codex-agents` installs them into the active Codex root at `agents/compound-converge/*.toml` with `compound-converge/install-manifest.json`. Generic hosts still receive the base skills; when auxiliary delegation is unavailable, the skills instruct the active agent to perform the same checks itself.
 
 ### Generated skill roots are committed
 
@@ -132,6 +132,10 @@ Use these checks after changing product surfaces:
 ```bash
 bun run sync
 bun run validate
+tmpdir=$(mktemp -d -t compound-converge-agents-XXXXXX)
+bun run install:codex-agents -- --codex-home "$tmpdir"
+test -f "$tmpdir/agents/compound-converge/cvg-feasibility-reviewer.toml"
+rm -rf "$tmpdir"
 bun test
 bun run plugin:validate
 ```
