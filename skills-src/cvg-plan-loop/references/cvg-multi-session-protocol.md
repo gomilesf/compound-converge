@@ -34,9 +34,13 @@ Every specialist prompt must include:
 - destination orchestrator Codex thread id,
 - exact callback template,
 - instruction to send the callback with `send_message_to_thread`,
+- instruction to include `Audit artifact: <absolute path>` when the specialist
+  creates or receives an audit artifact,
 - fallback instruction if callback transport is unavailable.
 
 The specialist must send its callback to the orchestrator thread. A final answer left only in the specialist thread is not sufficient.
+
+If the specialist creates or receives an audit artifact, the callback must include `Audit artifact: <absolute path>`.
 
 If the specialist cannot see its own thread id, it may write `thread id not exposed` in the callback body. That is acceptable only when the callback is delivered to the orchestrator thread; the orchestrator verifies source identity with `read_thread`.
 
@@ -104,6 +108,7 @@ Every specialist prompt must include:
 - required role skill,
 - task-specific external side-effect boundary, especially whether push, deploy,
   remote smoke checks, secrets, or external environment/data changes are allowed,
+- audit artifact callback line when the specialist creates or receives one,
 - exact callback transport block,
 - exact callback template.
 
@@ -121,6 +126,8 @@ Callback transport block:
 Destination orchestrator Codex thread id: <orchestrator-thread-id>
 
 When complete or blocked, send the callback to that thread with send_message_to_thread.
+If you create or receive an audit artifact, include this line in the callback:
+Audit artifact: <absolute path>
 If send_message_to_thread is unavailable, write "callback transport failed" and include the exact callback text in your final answer.
 ```
 
@@ -145,6 +152,7 @@ When the workflow completes, summarize:
 - base and final refs or final plan path,
 - specialist thread ids verified with `read_thread`,
 - callback transport status,
+- audit artifact paths received from specialists,
 - review loop results,
 - role-specific feedback results,
 - verification gates,

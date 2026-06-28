@@ -114,6 +114,34 @@ For each selected reviewer:
 4. If generic subagents are unavailable, run the same persona checks inline or
    serially.
 
+Immediately after each generic subagent dispatch, initialize an auxiliary
+coverage record for that persona. Preserve the platform identity returned by
+the dispatch tool. If the platform exposes only one child identifier, record
+the same value in `agent_id` and `thread_id`. If the child identifier is exposed
+only in a later completion notification, update the coverage record before
+writing `review.json`. If delegation is unavailable, keep the persona in the
+coverage object with `inline` or `skipped` status and null identity fields.
+
+Auxiliary coverage must be an object keyed by reviewer name:
+
+```json
+{
+  "feasibility-reviewer": {
+    "status": "dispatched | inline | skipped | failed",
+    "persona": "feasibility-reviewer",
+    "agent_role": "generic-subagent",
+    "agent_id": "<subagent id, child session id, or null>",
+    "thread_id": "<child thread/session id when exposed, or null>",
+    "artifact_path": "/tmp/compound-converge/cvg-plan-review/<run-id>/<reviewer-name>.json",
+    "artifact_written": true
+  }
+}
+```
+
+Do not collapse selected reviewers to plain status strings. The audit artifact
+must make it possible to distinguish a real generic-subagent dispatch from an
+inline fallback with the same reviewer persona.
+
 Each persona reviewer is read-only. It may inspect the plan, linked contract,
 and codebase with non-mutating commands, but must not edit files, change
 branches, commit, push, or create external artifacts except its own audit JSON
@@ -144,7 +172,9 @@ markdown fence, prose, citations, memory citations, or trailing text. If the
 artifact write fails, still return the raw JSON.
 
 Merge their findings with yours in step 4. Continue when one persona fails or
-times out, but record the failure in the auxiliary coverage line.
+times out, but record the failure in the auxiliary coverage object and compact
+coverage line. If a selected persona does not leave its artifact file, set
+`artifact_written` to false but still merge a valid raw JSON return.
 
 ### 4. Produce the review result
 
@@ -162,7 +192,7 @@ unavailable, use `inline`.
 Before responding, write:
 
 - `/tmp/compound-converge/cvg-plan-review/<run-id>/review.json` with the merged
-  findings, auxiliary coverage, verdict, and artifact path.
+  findings, object-form `auxiliary_coverage`, verdict, and artifact path.
 - `/tmp/compound-converge/cvg-plan-review/<run-id>/metadata.json` with:
 
 ```json
@@ -174,6 +204,15 @@ Before responding, write:
   "completed_at": "<ISO 8601 UTC timestamp>"
 }
 ```
+
+The response coverage line is a compact summary only. `review.json` must retain
+the full object-form auxiliary coverage with `persona`, `agent_role`,
+`agent_id`, `thread_id`, `artifact_path`, and `artifact_written` for every
+selected, skipped, failed, or inline reviewer.
+
+If this review is completed as part of an orchestrated callback workflow, include
+`Audit artifact: /tmp/compound-converge/cvg-plan-review/<run-id>/` in the
+callback text.
 
 If no blocking findings exist, the result is a clean plan verdict.
 

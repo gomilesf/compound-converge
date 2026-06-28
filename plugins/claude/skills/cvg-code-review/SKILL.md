@@ -100,6 +100,33 @@ mutations, or external APIs:**
 When auxiliary delegation is available, run the relevant reviewers in parallel.
 If it is not available, perform the same checks yourself.
 
+Immediately after each dispatch, initialize an auxiliary coverage record for
+that reviewer. Preserve the platform identity returned by the dispatch tool.
+If the platform exposes only one child identifier, record the same value in
+`agent_id` and `thread_id`. If the child identifier is exposed only in a later
+completion notification, update the coverage record before writing
+`review.json`. If delegation is unavailable, keep the reviewer in the coverage
+object with `inline` or `skipped` status and null identity fields.
+
+Auxiliary coverage must be an object keyed by reviewer name:
+
+```json
+{
+  "cvg-security-reviewer": {
+    "status": "dispatched | inline | skipped | failed",
+    "agent_role": "<requested agent_type, for example cvg-security-reviewer>",
+    "agent_id": "<spawn_agent id, child session id, or null>",
+    "thread_id": "<child thread/session id when exposed, or null>",
+    "artifact_path": "/tmp/compound-converge/cvg-code-review/<run-id>/<reviewer-name>.json",
+    "artifact_written": true
+  }
+}
+```
+
+Do not collapse selected reviewers to plain status strings. The audit artifact
+must make it possible to distinguish a real platform reviewer dispatch from an
+inline fallback with the same name.
+
 When dispatching auxiliary reviewers, include the project stage and the
 domain-risk override rule in the sub-agent prompt. Replace `<run-id>` and
 `<reviewer-name>` with the actual values before dispatch.
@@ -143,9 +170,9 @@ Merge sub-agent findings with your own. Consume only valid raw JSON from
 sub-agents. If a sub-agent returns markdown, prose, citations, memory citations,
 or any text outside the JSON object, treat that auxiliary result as failed and
 perform that review lens yourself. If a selected auxiliary reviewer does not
-leave its artifact file, record that in the audit coverage but still use a valid
-raw JSON return for merge. Deduplicate by file+line, keep highest severity on
-overlap. Classify each as:
+leave its artifact file, set `artifact_written` to false in the audit coverage
+but still use a valid raw JSON return for merge. Deduplicate by file+line, keep
+highest severity on overlap. Classify each as:
 
 **Code bug** - the plan says to do X, the code does X wrong.
 - Route: worker fixes this specific code.
@@ -164,7 +191,7 @@ Treating a contract gap as a code bug causes whack-a-mole.
 Before responding, write:
 
 - `/tmp/compound-converge/cvg-code-review/<run-id>/review.json` with the merged
-  findings, auxiliary coverage, verdict, and artifact path.
+  findings, object-form `auxiliary_coverage`, verdict, and artifact path.
 - `/tmp/compound-converge/cvg-code-review/<run-id>/metadata.json` with:
 
 ```json
@@ -183,6 +210,15 @@ Start the response with:
 Audit artifact: /tmp/compound-converge/cvg-code-review/<run-id>/
 Auxiliary coverage: cvg-correctness-reviewer=<dispatched|inline|failed>, cvg-testing-reviewer=<dispatched|inline|failed>, cvg-security-reviewer=<dispatched|inline|skipped|failed>, cvg-adversarial-reviewer=<dispatched|inline|skipped|failed>, cvg-reliability-reviewer=<dispatched|inline|skipped|failed>
 ```
+
+The response coverage line is a compact summary only. `review.json` must retain
+the full object-form auxiliary coverage with `agent_role`, `agent_id`,
+`thread_id`, `artifact_path`, and `artifact_written` for every selected,
+skipped, failed, or inline reviewer.
+
+If this review is completed as part of an orchestrated callback workflow, include
+`Audit artifact: /tmp/compound-converge/cvg-code-review/<run-id>/` in the
+callback text.
 
 Use one of these verdicts:
 

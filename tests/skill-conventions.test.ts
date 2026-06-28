@@ -117,6 +117,12 @@ describe("skill conventions", () => {
       expect(skillContent).toContain("The returned response must be one raw JSON object only")
       expect(skillContent).toContain("/tmp/compound-converge/cvg-plan-review/<run-id>/review.json")
       expect(skillContent).toContain("/tmp/compound-converge/cvg-plan-review/<run-id>/metadata.json")
+      expect(skillContent).toContain("Auxiliary coverage must be an object keyed by reviewer name")
+      expect(skillContent).toContain("Do not collapse selected reviewers to plain status strings")
+      expect(skillContent).toContain('"agent_role": "generic-subagent"')
+      expect(skillContent).toContain('"agent_id": "<subagent id, child session id, or null>"')
+      expect(skillContent).toContain('"thread_id": "<child thread/session id when exposed, or null>"')
+      expect(skillContent).toContain('"artifact_written": true')
 
       for (const persona of ["feasibility-reviewer", "security-lens-reviewer", "scope-guardian-reviewer"]) {
         const personaContent = readFileSync(
@@ -151,6 +157,12 @@ describe("skill conventions", () => {
       expect(skillContent).toContain("/tmp/compound-converge/cvg-code-review/<run-id>/metadata.json")
       expect(skillContent).toContain("Return exactly one raw JSON object matching the findings")
       expect(skillContent).toContain("treat that auxiliary result as failed")
+      expect(skillContent).toContain("Auxiliary coverage must be an object keyed by reviewer name")
+      expect(skillContent).toContain("Do not collapse selected reviewers to plain status strings")
+      expect(skillContent).toContain('"agent_role": "<requested agent_type, for example cvg-security-reviewer>"')
+      expect(skillContent).toContain('"agent_id": "<spawn_agent id, child session id, or null>"')
+      expect(skillContent).toContain('"thread_id": "<child thread/session id when exposed, or null>"')
+      expect(skillContent).toContain('"artifact_written": true')
     }
 
     const reviewerAgents = AUXILIARY_AGENT_NAMES.filter((name) => name.endsWith("-reviewer"))
@@ -213,6 +225,7 @@ describe("skill conventions", () => {
       "Do not use multi-agent subagents, task agents, context-fork agents, local shell jobs, or background processes as substitutes.",
       "If `read_thread` cannot read the id, stop the workflow and retry with Codex thread tools or report a tool-layer blocker.",
       "The specialist must send its callback to the orchestrator thread.",
+      "If the specialist creates or receives an audit artifact, the callback must include `Audit artifact: <absolute path>`.",
       "Destination orchestrator Codex thread id: <orchestrator-thread-id>",
       "Do not emulate a heartbeat with `sleep`, repeated `read_thread`, shell loops, timers, or repeated status checks in the same assistant turn.",
       "do not replace the missing heartbeat with manual polling.",
