@@ -105,6 +105,14 @@ mutations, or external APIs:**
 When auxiliary delegation is available, run the relevant reviewers in parallel.
 If it is not available, perform the same checks yourself.
 
+**Final fresh exit mode:** When the task says `Review mode: final-fresh-exit`,
+selected auxiliary reviewers must be real platform dispatches. In this mode,
+inline auxiliary coverage cannot produce a final exit pass. If any selected
+reviewer cannot be dispatched, has null `agent_id` and `thread_id`, returns
+invalid JSON, or fails to write its artifact, set the verdict to **Not ready**
+with a `degraded auxiliary coverage` finding and state that the review cannot
+satisfy the final fresh-exit gate.
+
 Immediately after each dispatch, initialize an auxiliary coverage record for
 that reviewer. Preserve the platform identity returned by the dispatch tool.
 If the platform exposes only one child identifier, record the same value in

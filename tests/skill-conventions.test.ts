@@ -164,6 +164,9 @@ describe("skill conventions", () => {
       expect(skillContent).toContain("treat that auxiliary result as failed")
       expect(skillContent).toContain("Auxiliary coverage must be an object keyed by reviewer name")
       expect(skillContent).toContain("Do not collapse selected reviewers to plain status strings")
+      expect(skillContent).toContain("Final fresh exit mode")
+      expect(skillContent).toContain("inline auxiliary coverage cannot produce a final exit pass")
+      expect(skillContent).toContain("degraded auxiliary coverage")
       expect(skillContent).toContain('"agent_role": "<requested agent_type, for example cvg-security-reviewer>"')
       expect(skillContent).toContain('"agent_id": "<spawn_agent id, child session id, or null>"')
       expect(skillContent).toContain('"thread_id": "<child thread/session id when exposed, or null>"')
@@ -196,6 +199,8 @@ describe("skill conventions", () => {
       expect(skillContent).toContain("Fresh reviewer prompts must not include a `Relevant review history` narrative")
       expect(skillContent).toContain("`Risk areas to inspect independently:`")
       expect(skillContent).toContain("reviewer verdicts, blocker text, focused re-review results")
+      expect(skillContent).toContain("Review mode: final-fresh-exit")
+      expect(skillContent).toContain("inline auxiliary coverage cannot satisfy the final implementation exit condition")
     }
   })
 
@@ -235,6 +240,7 @@ describe("skill conventions", () => {
       "Do not emulate a heartbeat with `sleep`, repeated `read_thread`, shell loops, timers, or repeated status checks in the same assistant turn.",
       "do not replace the missing heartbeat with manual polling.",
       "Same-reviewer pass is never the final exit condition.",
+      "inline auxiliary coverage cannot satisfy the final fresh-reviewer exit condition.",
       "Plan-review blockers return to the planner with the `cvg-plan-review-feedback` skill.",
       "Code-review blockers return to the worker with the `cvg-code-review-feedback` skill.",
     ]) {

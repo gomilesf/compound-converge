@@ -77,6 +77,7 @@ Reviewer prompt must include:
 - role: fresh code reviewer,
 - destination orchestrator Codex thread id,
 - required cvg-code-review skill, such as `cvg-code-review`,
+- review mode when this reviewer is the final exit gate,
 - base commit and head commit,
 - plan path and implementation notes path when present,
 - `git diff <base>..HEAD`,
@@ -168,16 +169,17 @@ Same reviewer pass is not enough to exit.
 After same reviewer passes, create a new fresh code reviewer thread for a complete first review. Verify it with `read_thread`.
 
 Use the same minimal reviewer prompt shape from Phase 2. The new fresh reviewer
-must send its callback to the orchestrator with `send_message_to_thread`; do
-not ask it to leave the callback only in its own thread. Do not include previous
-reviewer verdicts, blocker text, focused re-review results, or worker repair
-summaries; include only independent risk-area labels if needed.
+prompt must include `Review mode: final-fresh-exit`. It must send its callback
+to the orchestrator with `send_message_to_thread`; do not ask it to leave the
+callback only in its own thread. Do not include previous reviewer verdicts, blocker text, focused re-review results, or worker repair summaries; include only independent risk-area labels if needed.
 
 Final implementation exit condition:
 
 - new fresh reviewer,
 - complete first code review,
 - no blocking findings of any class, including code bugs, contract gaps, unsafe side-effect paths, missing real surfaces, missing lifecycle coverage, or missing required gates.
+- audit artifact shows every selected auxiliary reviewer dispatched with a
+  non-null `agent_id` or `thread_id`; inline auxiliary coverage cannot satisfy the final implementation exit condition.
 
 If the new fresh reviewer finds blockers, repeat from Phase 3.
 

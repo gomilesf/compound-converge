@@ -98,6 +98,11 @@ The exit sequence is:
 4. If same reviewer passes, start a new fresh reviewer for another complete first review.
 5. Exit only when the new fresh reviewer reports no blocking findings.
 
+For code-review final exits, the final fresh reviewer prompt must include
+`Review mode: final-fresh-exit`. Its audit artifact must show every selected
+auxiliary reviewer dispatched with a non-null `agent_id` or `thread_id`;
+inline auxiliary coverage cannot satisfy the final fresh-reviewer exit condition.
+
 ## Specialist Prompt Checklist
 
 Every specialist prompt must include:
