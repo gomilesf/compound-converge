@@ -58,6 +58,18 @@ Must not regress existing production billing flows. Eight surfaces in the
 invariant matrix must all pass.
 ```
 
+### 2b. Create audit run
+
+Create a per-review audit directory before dispatching auxiliary reviewers:
+
+```bash
+RUN_ID=$(date +%Y%m%d-%H%M%S)-$(head -c4 /dev/urandom | od -An -tx1 | tr -d ' ')
+mkdir -p "/tmp/compound-converge/cvg-code-review/$RUN_ID"
+```
+
+Use this run id for every auxiliary reviewer and for the final review artifact.
+The artifact directory is the durable audit record for this review run.
+
 ### 3. Dispatch auxiliary reviewers (parallel with step 4)
 
 Dispatch sub-agent reviewers in parallel with your own step 4 review.
@@ -89,15 +101,23 @@ When auxiliary delegation is available, run the relevant reviewers in parallel.
 If it is not available, perform the same checks yourself.
 
 When dispatching auxiliary reviewers, include the project stage and the
-domain-risk override rule in the sub-agent prompt.
+domain-risk override rule in the sub-agent prompt. Replace `<run-id>` and
+`<reviewer-name>` with the actual values before dispatch.
 Also include this output contract verbatim:
 
 ```text
 Use only the review prompt, plan, diff, and repository files you read for this
 review. Do not consult project memory, prior sessions, rollout summaries, or
-external history. Return exactly one raw JSON object matching the findings
-schema. Do not wrap it in markdown and do not append prose, citations, memory
-citations, or any text after the JSON.
+external history.
+
+Audit artifact: /tmp/compound-converge/cvg-code-review/<run-id>/<reviewer-name>.json
+Before returning, write the exact JSON object you will return to that artifact
+path. This is the only write operation you may perform. If the write fails,
+still return the JSON and include no extra prose.
+
+Return exactly one raw JSON object matching the findings schema. Do not wrap it
+in markdown and do not append prose, citations, memory citations, or any text
+after the JSON.
 ```
 
 Sub-agent findings merge with yours in step 5.
@@ -122,8 +142,10 @@ violations).
 Merge sub-agent findings with your own. Consume only valid raw JSON from
 sub-agents. If a sub-agent returns markdown, prose, citations, memory citations,
 or any text outside the JSON object, treat that auxiliary result as failed and
-perform that review lens yourself. Deduplicate by file+line, keep highest
-severity on overlap. Classify each as:
+perform that review lens yourself. If a selected auxiliary reviewer does not
+leave its artifact file, record that in the audit coverage but still use a valid
+raw JSON return for merge. Deduplicate by file+line, keep highest severity on
+overlap. Classify each as:
 
 **Code bug** - the plan says to do X, the code does X wrong.
 - Route: worker fixes this specific code.
@@ -138,6 +160,29 @@ severity on overlap. Classify each as:
 Treating a contract gap as a code bug causes whack-a-mole.
 
 ### 6. Produce the verdict
+
+Before responding, write:
+
+- `/tmp/compound-converge/cvg-code-review/<run-id>/review.json` with the merged
+  findings, auxiliary coverage, verdict, and artifact path.
+- `/tmp/compound-converge/cvg-code-review/<run-id>/metadata.json` with:
+
+```json
+{
+  "run_id": "<run-id>",
+  "branch": "<git branch --show-current>",
+  "head_sha": "<git rev-parse HEAD>",
+  "verdict": "<Ready to merge | Ready with fixes | Not ready>",
+  "completed_at": "<ISO 8601 UTC timestamp>"
+}
+```
+
+Start the response with:
+
+```text
+Audit artifact: /tmp/compound-converge/cvg-code-review/<run-id>/
+Auxiliary coverage: cvg-correctness-reviewer=<dispatched|inline|failed>, cvg-testing-reviewer=<dispatched|inline|failed>, cvg-security-reviewer=<dispatched|inline|skipped|failed>, cvg-adversarial-reviewer=<dispatched|inline|skipped|failed>, cvg-reliability-reviewer=<dispatched|inline|skipped|failed>
+```
 
 Use one of these verdicts:
 

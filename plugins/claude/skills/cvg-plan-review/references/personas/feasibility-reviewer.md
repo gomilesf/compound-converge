@@ -27,4 +27,6 @@ theoretical scalability concerns without current evidence.
 ## Output
 
 Return only findings that cite plan or code evidence and name the specific plan
-change needed. If the plan is feasible, return `Status: no findings`.
+change needed. Use the raw JSON output contract supplied by the orchestrator. If
+the plan is feasible, return `status: "no findings"` with an empty findings
+array.

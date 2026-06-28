@@ -43,6 +43,15 @@ Note the assessed complexity (brief / standard / full), slice list, invariant
 matrix (if present), surfaces list (if present), and "done when" criteria for
 each slice.
 
+Create a per-review audit directory:
+
+```bash
+RUN_ID=$(date +%Y%m%d-%H%M%S)-$(head -c4 /dev/urandom | od -An -tx1 | tr -d ' ')
+mkdir -p "/tmp/compound-converge/cvg-plan-review/$RUN_ID"
+```
+
+Use this run id for auxiliary persona artifacts and the final review artifact.
+
 ### 2. Read the code the plan references
 
 For each file listed in the plan, read it. Also search for:
@@ -97,7 +106,9 @@ For each selected reviewer:
    `references/personas/<reviewer-name>.md`.
 2. Dispatch a generic subagent using the platform's subagent primitive when
    available. Pass the persona file content, plan path, repo path, assessed
-   plan complexity, project stage guidance, and domain-risk override rule.
+   plan complexity, project stage guidance, domain-risk override rule, run id,
+   and the reviewer artifact path. Replace `<run-id>` and `<reviewer-name>`
+   with the actual values before dispatch.
 3. Do not use typed agent names, `subagent_type`, or platform-level custom-agent
    registration for these plan-review personas.
 4. If generic subagents are unavailable, run the same persona checks inline or
@@ -105,20 +116,32 @@ For each selected reviewer:
 
 Each persona reviewer is read-only. It may inspect the plan, linked contract,
 and codebase with non-mutating commands, but must not edit files, change
-branches, commit, push, or create external artifacts.
+branches, commit, push, or create external artifacts except its own audit JSON
+under `/tmp/compound-converge/cvg-plan-review/<run-id>/`.
 
 Ask each persona reviewer to return:
 
-```text
-Reviewer: <reviewer-name>
-Status: findings | no findings | blocked
-Findings:
-- Severity: P0 | P1 | P2
-  Evidence: <plan/code reference>
-  Issue: <plan-level gap>
-  Suggested plan change: <specific change>
-Residual risk: <optional>
+```json
+{
+  "reviewer": "<reviewer-name>",
+  "status": "findings | no findings | blocked",
+  "findings": [
+    {
+      "severity": "P0 | P1 | P2",
+      "evidence": "<plan/code reference>",
+      "issue": "<plan-level gap>",
+      "suggested_plan_change": "<specific change>"
+    }
+  ],
+  "residual_risk": "<optional>"
+}
 ```
+
+The persona must write that same JSON object to
+`/tmp/compound-converge/cvg-plan-review/<run-id>/<reviewer-name>.json` before
+returning it. The returned response must be one raw JSON object only: no
+markdown fence, prose, citations, memory citations, or trailing text. If the
+artifact write fails, still return the raw JSON.
 
 Merge their findings with yours in step 4. Continue when one persona fails or
 times out, but record the failure in the auxiliary coverage line.
@@ -128,12 +151,29 @@ times out, but record the failure in the auxiliary coverage line.
 Start with an auxiliary coverage line:
 
 ```text
+Audit artifact: /tmp/compound-converge/cvg-plan-review/<run-id>/
 Auxiliary coverage: feasibility-reviewer=<dispatched|inline|skipped|failed>, security-lens-reviewer=<dispatched|inline|skipped|failed>, scope-guardian-reviewer=<dispatched|inline|skipped|failed>
 ```
 
 Use `skipped` for unselected reviewers and for all three reviewers on brief
 plans. If a selected reviewer ran inline because generic subagents were
 unavailable, use `inline`.
+
+Before responding, write:
+
+- `/tmp/compound-converge/cvg-plan-review/<run-id>/review.json` with the merged
+  findings, auxiliary coverage, verdict, and artifact path.
+- `/tmp/compound-converge/cvg-plan-review/<run-id>/metadata.json` with:
+
+```json
+{
+  "run_id": "<run-id>",
+  "branch": "<git branch --show-current>",
+  "head_sha": "<git rev-parse HEAD>",
+  "verdict": "<clean | blocking findings>",
+  "completed_at": "<ISO 8601 UTC timestamp>"
+}
+```
 
 If no blocking findings exist, the result is a clean plan verdict.
 

@@ -112,11 +112,23 @@ describe("skill conventions", () => {
       const planReviewDir = path.join(ROOT, relativeRoot, "cvg-plan-review")
       const skillContent = readFileSync(path.join(planReviewDir, "SKILL.md"), "utf8")
 
+      expect(skillContent).toContain("/tmp/compound-converge/cvg-plan-review/$RUN_ID")
+      expect(skillContent).toContain("/tmp/compound-converge/cvg-plan-review/<run-id>/<reviewer-name>.json")
+      expect(skillContent).toContain("The returned response must be one raw JSON object only")
+      expect(skillContent).toContain("/tmp/compound-converge/cvg-plan-review/<run-id>/review.json")
+      expect(skillContent).toContain("/tmp/compound-converge/cvg-plan-review/<run-id>/metadata.json")
+
       for (const persona of ["feasibility-reviewer", "security-lens-reviewer", "scope-guardian-reviewer"]) {
+        const personaContent = readFileSync(
+          path.join(planReviewDir, "references", "personas", `${persona}.md`),
+          "utf8",
+        )
+
         expect(
-          readFileSync(path.join(planReviewDir, "references", "personas", `${persona}.md`), "utf8").trim().length,
+          personaContent.trim().length,
           `${relativeRoot}/${persona}`,
         ).toBeGreaterThan(0)
+        expect(personaContent, `${relativeRoot}/${persona}`).toContain("raw JSON output contract")
         expect(skillContent, `${relativeRoot}/${persona}`).toContain(`references/personas/<reviewer-name>.md`)
       }
 
@@ -133,6 +145,10 @@ describe("skill conventions", () => {
 
       expect(skillContent).toContain("Also include this output contract verbatim")
       expect(skillContent).toContain("Do not consult project memory, prior sessions, rollout summaries, or")
+      expect(skillContent).toContain("/tmp/compound-converge/cvg-code-review/$RUN_ID")
+      expect(skillContent).toContain("/tmp/compound-converge/cvg-code-review/<run-id>/<reviewer-name>.json")
+      expect(skillContent).toContain("/tmp/compound-converge/cvg-code-review/<run-id>/review.json")
+      expect(skillContent).toContain("/tmp/compound-converge/cvg-code-review/<run-id>/metadata.json")
       expect(skillContent).toContain("Return exactly one raw JSON object matching the findings")
       expect(skillContent).toContain("treat that auxiliary result as failed")
     }

@@ -23,4 +23,6 @@ future-proofing suggestions that do not affect the current goal.
 ## Output
 
 Return only findings that cite plan evidence and name the specific plan change
-needed. If the plan is right-sized, return `Status: no findings`.
+needed. Use the raw JSON output contract supplied by the orchestrator. If the
+plan is right-sized, return `status: "no findings"` with an empty findings
+array.

@@ -25,5 +25,6 @@ realistic path in the current design.
 ## Output
 
 Return only findings that cite plan or code evidence and name the specific plan
-change needed. If security is not materially in scope, return
-`Status: no findings`.
+change needed. Use the raw JSON output contract supplied by the orchestrator. If
+security is not materially in scope, return `status: "no findings"` with an
+empty findings array.
