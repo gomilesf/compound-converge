@@ -1,8 +1,8 @@
-# Compound Converge Productization
+# Convergo Productization
 
 ## Goal
 
-Package Compound Converge as a public coding-agent plugin while keeping Codex-only orchestration skills out of non-Codex installs.
+Package Convergo as a public coding-agent plugin while keeping Codex-only orchestration skills out of non-Codex installs.
 
 ## Reference Model
 
@@ -23,11 +23,11 @@ repo root
 `-- docs/               specs, plans, and solution notes
 ```
 
-That root-native shape works when every platform should receive the same skills. Compound Converge has a different constraint: `cvg-plan-loop`, `cvg-build-loop`, and `cvg-multi-session` depend on Codex thread tools, callback transport, heartbeat handoff, and fresh-reviewer gates. They must not be exposed as Claude, Cursor, OpenCode, Pi, or Gemini skills.
+That root-native shape works when every platform should receive the same skills. Convergo has a different constraint: `cvg-plan-loop`, `cvg-build-loop`, and `cvg-multi-session` depend on Codex thread tools, callback transport, heartbeat handoff, and fresh-reviewer gates. They must not be exposed as Claude, Cursor, OpenCode, Pi, or Gemini skills.
 
 ## Target Architecture
 
-Compound Converge therefore keeps one repository but uses separate platform plugin roots:
+Convergo therefore keeps one repository but uses separate platform plugin roots:
 
 ```text
 convergo
@@ -71,7 +71,7 @@ convergo
 
 ### Platform roots enforce product boundaries
 
-Native plugin loaders discover skills from a plugin root. Compound Converge uses different plugin roots so each host receives only the skills it can run:
+Native plugin loaders discover skills from a plugin root. Convergo uses different plugin roots so each host receives only the skills it can run:
 
 - Claude Code marketplace source points at `./plugins/claude`, which contains only base skills.
 - Codex marketplace source points at `./plugins/codex`, whose `.codex-plugin/plugin.json` points at `./skills/` and exposes all nine skills.
@@ -79,7 +79,7 @@ Native plugin loaders discover skills from a plugin root. Compound Converge uses
 
 ### Auxiliary agents are vendored as a minimal closure
 
-The base DD-derived skills dispatch a small set of Compound Engineering auxiliary agents. Compound Converge vendors only the platform agents directly referenced by its public skills:
+The base DD-derived skills dispatch a small set of Compound Engineering auxiliary agents. Convergo vendors only the platform agents directly referenced by its public skills:
 
 ```text
 cvg-best-practices-researcher

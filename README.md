@@ -176,9 +176,6 @@ packaged as `cvg-*` agents for Claude Code and Codex.
 
 ## Install
 
-> Note: the project is named **Convergo**, but its marketplace / package id is
-> still `convergo` (the repository has not been renamed yet). Use the
-> ids exactly as shown in the commands below.
 
 ### Claude Code
 
