@@ -18,9 +18,9 @@
   ],
   "skills": "./skills/",
   "interface": {
-    "displayName": "Compound Converge",
+    "displayName": "Convergo",
     "shortDescription": "Fresh-reviewer workflow skills for planning, implementation, and review loops.",
-    "longDescription": "Compound Converge packages the fresh-reviewer convergence protocol as native agent skills. Use cvg-plan and cvg-plan-review to stabilize a plan, cvg-work and cvg-code-review to stabilize an implementation, and Codex-only loop skills to coordinate real specialist threads with callback transport, heartbeat waiting, step-back classification, and a final fresh-reviewer exit gate.",
+    "longDescription": "Convergo packages the fresh-reviewer convergence protocol as native agent skills. Use cvg-plan and cvg-plan-review to stabilize a plan, cvg-work and cvg-code-review to stabilize an implementation, and Codex-only loop skills to coordinate real specialist threads with callback transport, heartbeat waiting, step-back classification, and a final fresh-reviewer exit gate.",
     "developerName": "gomilesf",
     "category": "Coding",
     "capabilities": [

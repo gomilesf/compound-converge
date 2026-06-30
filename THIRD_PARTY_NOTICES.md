@@ -1,6 +1,6 @@
 # Third-Party Notices
 
-Compound Converge includes adapted skill and agent prompt content derived from
+Convergo includes adapted skill and agent prompt content derived from
 the Compound Engineering plugin:
 
 - Project: Compound Engineering
@@ -8,7 +8,7 @@ the Compound Engineering plugin:
 - License: MIT
 
 The derived content is namespaced for this project with the `cvg-*` prefix and
-packaged as a minimal closure for Compound Converge workflows.
+packaged as a minimal closure for Convergo workflows.
 
 ## Compound Engineering License
 

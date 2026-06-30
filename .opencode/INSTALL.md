@@ -1,6 +1,6 @@
-# Installing Compound Converge for OpenCode
+# Installing Convergo for OpenCode
 
-Add Compound Converge to the `plugin` array in your global or project `opencode.json`:
+Add Convergo to the `plugin` array in your global or project `opencode.json`:
 
 ```json
 {
