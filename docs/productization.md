@@ -30,7 +30,7 @@ That root-native shape works when every platform should receive the same skills.
 Compound Converge therefore keeps one repository but uses separate platform plugin roots:
 
 ```text
-compound-converge
+convergo
 |-- skills-src/
 |   |-- cvg-plan/
 |   |-- cvg-plan-review/
@@ -47,7 +47,7 @@ compound-converge
 |-- plugins/
 |   |-- codex/
 |   |   |-- .codex-plugin/plugin.json
-|   |   |-- .codex/agents/compound-converge/
+|   |   |-- .codex/agents/convergo/
 |   |   `-- skills/        all nine skills
 |   |-- claude/
 |   |   |-- .claude-plugin/plugin.json
@@ -91,7 +91,7 @@ cvg-adversarial-reviewer
 cvg-reliability-reviewer
 ```
 
-Claude Code receives these under `plugins/claude/agents/*.agent.md`. Codex keeps the equivalent TOML agents under `plugins/codex/.codex/agents/compound-converge/*.toml`, and `bun run install:codex-agents` installs them into the active Codex root at `agents/compound-converge/*.toml` with `compound-converge/install-manifest.json`. Generic hosts still receive the base skills; when auxiliary delegation is unavailable, the skills instruct the active agent to perform the same checks itself.
+Claude Code receives these under `plugins/claude/agents/*.agent.md`. Codex keeps the equivalent TOML agents under `plugins/codex/.codex/agents/convergo/*.toml`, and `bun run install:codex-agents` installs them into the active Codex root at `agents/convergo/*.toml` with `convergo/install-manifest.json`. Generic hosts still receive the base skills; when auxiliary delegation is unavailable, the skills instruct the active agent to perform the same checks itself.
 
 Plan-review personas are vendored differently: `cvg-plan-review` reads
 skill-local prompt assets from `references/personas/` and dispatches generic
@@ -135,9 +135,9 @@ Use these checks after changing product surfaces:
 ```bash
 bun run sync
 bun run validate
-tmpdir=$(mktemp -d -t compound-converge-agents-XXXXXX)
+tmpdir=$(mktemp -d -t convergo-agents-XXXXXX)
 bun run install:codex-agents -- --codex-home "$tmpdir"
-test -f "$tmpdir/agents/compound-converge/cvg-correctness-reviewer.toml"
+test -f "$tmpdir/agents/convergo/cvg-correctness-reviewer.toml"
 rm -rf "$tmpdir"
 bun test
 bun run plugin:validate
@@ -146,7 +146,7 @@ bun run plugin:validate
 For Codex, use a temporary profile to verify that the custom marketplace descriptor is accepted without changing the user's real Codex config:
 
 ```bash
-tmpdir=$(mktemp -d -t compound-converge-codex-XXXXXX)
+tmpdir=$(mktemp -d -t convergo-codex-XXXXXX)
 CODEX_HOME="$tmpdir" codex plugin marketplace add "$PWD" --json
 CODEX_HOME="$tmpdir" codex plugin marketplace list --json
 rm -rf "$tmpdir"

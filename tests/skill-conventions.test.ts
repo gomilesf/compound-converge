@@ -112,11 +112,11 @@ describe("skill conventions", () => {
       const planReviewDir = path.join(ROOT, relativeRoot, "cvg-plan-review")
       const skillContent = readFileSync(path.join(planReviewDir, "SKILL.md"), "utf8")
 
-      expect(skillContent).toContain("/tmp/compound-converge/cvg-plan-review/$RUN_ID")
-      expect(skillContent).toContain("/tmp/compound-converge/cvg-plan-review/<run-id>/<reviewer-name>.json")
+      expect(skillContent).toContain("/tmp/convergo/cvg-plan-review/$RUN_ID")
+      expect(skillContent).toContain("/tmp/convergo/cvg-plan-review/<run-id>/<reviewer-name>.json")
       expect(skillContent).toContain("The returned response must be one raw JSON object only")
-      expect(skillContent).toContain("/tmp/compound-converge/cvg-plan-review/<run-id>/review.json")
-      expect(skillContent).toContain("/tmp/compound-converge/cvg-plan-review/<run-id>/metadata.json")
+      expect(skillContent).toContain("/tmp/convergo/cvg-plan-review/<run-id>/review.json")
+      expect(skillContent).toContain("/tmp/convergo/cvg-plan-review/<run-id>/metadata.json")
       expect(skillContent).toContain("Main reviewer must not consult project memory, prior sessions, rollout summaries, or external history.")
       expect(skillContent).toContain("Do not consult project memory, prior sessions, rollout summaries, or external history.")
       expect(skillContent).toContain("Do not cite memory or include memory citations.")
@@ -156,10 +156,10 @@ describe("skill conventions", () => {
       expect(skillContent).toContain("Main reviewer must not consult project memory, prior sessions, rollout summaries, or external history.")
       expect(skillContent).toContain("Do not cite memory or include memory citations.")
       expect(skillContent).toContain("Do not consult project memory, prior sessions, rollout summaries, or")
-      expect(skillContent).toContain("/tmp/compound-converge/cvg-code-review/$RUN_ID")
-      expect(skillContent).toContain("/tmp/compound-converge/cvg-code-review/<run-id>/<reviewer-name>.json")
-      expect(skillContent).toContain("/tmp/compound-converge/cvg-code-review/<run-id>/review.json")
-      expect(skillContent).toContain("/tmp/compound-converge/cvg-code-review/<run-id>/metadata.json")
+      expect(skillContent).toContain("/tmp/convergo/cvg-code-review/$RUN_ID")
+      expect(skillContent).toContain("/tmp/convergo/cvg-code-review/<run-id>/<reviewer-name>.json")
+      expect(skillContent).toContain("/tmp/convergo/cvg-code-review/<run-id>/review.json")
+      expect(skillContent).toContain("/tmp/convergo/cvg-code-review/<run-id>/metadata.json")
       expect(skillContent).toContain("Return exactly one raw JSON object matching the findings")
       expect(skillContent).toContain("treat that auxiliary result as failed")
       expect(skillContent).toContain("Auxiliary coverage must be an object keyed by reviewer name")
@@ -180,7 +180,7 @@ describe("skill conventions", () => {
       { extension: ".agent.md", root: "agents-src/claude" },
       { extension: ".toml", root: "agents-src/codex" },
       { extension: ".agent.md", root: "plugins/claude/agents" },
-      { extension: ".toml", root: "plugins/codex/.codex/agents/compound-converge" },
+      { extension: ".toml", root: "plugins/codex/.codex/agents/convergo" },
     ]
 
     for (const agentRoot of agentRoots) {

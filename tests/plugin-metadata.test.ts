@@ -11,9 +11,9 @@ import {
 } from "../src/metadata"
 
 const ROOT = process.cwd()
-const PLUGIN_NAME = "compound-converge"
+const PLUGIN_NAME = "convergo"
 const EXPECTED_VERSION = "0.1.0"
-const EXPECTED_REPOSITORY = "https://github.com/gomilesfd/compound-converge"
+const EXPECTED_REPOSITORY = "https://github.com/gomilesf/convergo"
 
 function readJson<T>(relativePath: string): T {
   return JSON.parse(readFileSync(path.join(ROOT, relativePath), "utf8")) as T
@@ -98,10 +98,10 @@ describe("plugin metadata", () => {
       "agents-src/claude",
       "agents-src/codex",
       "plugins/claude/agents",
-      "plugins/codex/.codex/agents/compound-converge",
+      "plugins/codex/.codex/agents/convergo",
       "gemini-extension.json",
-      ".opencode/plugins/compound-converge.js",
-      ".pi/extensions/compound-converge.ts",
+      ".opencode/plugins/convergo.js",
+      ".pi/extensions/convergo.ts",
     ]) {
       expect(existsSync(path.join(ROOT, relativePath)), relativePath).toBe(true)
     }
@@ -133,9 +133,9 @@ describe("plugin metadata", () => {
     expect(packageJson.name).toBe(PLUGIN_NAME)
     expect(packageJson.version).toBe(EXPECTED_VERSION)
     expect(packageJson.repository).toBe(EXPECTED_REPOSITORY)
-    expect(packageJson.main).toBe(".opencode/plugins/compound-converge.js")
+    expect(packageJson.main).toBe(".opencode/plugins/convergo.js")
     expect(packageJson.scripts["install:codex-agents"]).toBe("bun run scripts/install-codex-agents.ts")
-    expect(packageJson.pi.extensions).toEqual(["./.pi/extensions/compound-converge.ts"])
+    expect(packageJson.pi.extensions).toEqual(["./.pi/extensions/convergo.ts"])
     expect(packageJson.pi.skills).toEqual(["./plugins/generic/skills"])
 
     expect(claudePlugin).toMatchObject({

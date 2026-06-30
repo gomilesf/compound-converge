@@ -29,12 +29,12 @@ describe("Codex agent install", () => {
 
       expect(result.agents).toEqual(expectedAgents)
       for (const agentFile of expectedAgents) {
-        expect(existsSync(path.join(codexRoot, "agents", "compound-converge", agentFile))).toBe(true)
+        expect(existsSync(path.join(codexRoot, "agents", "convergo", agentFile))).toBe(true)
       }
 
-      expect(readJson(path.join(codexRoot, "compound-converge", "install-manifest.json"))).toEqual({
+      expect(readJson(path.join(codexRoot, "convergo", "install-manifest.json"))).toEqual({
         version: 1,
-        pluginName: "compound-converge",
+        pluginName: "convergo",
         skills: CODEX_SKILLS,
         prompts: [],
         agents: expectedAgents,
@@ -46,8 +46,8 @@ describe("Codex agent install", () => {
 
   test("cleans only safe stale agent entries from the previous manifest", async () => {
     const codexRoot = tempCodexRoot()
-    const agentsRoot = path.join(codexRoot, "agents", "compound-converge")
-    const manifestRoot = path.join(codexRoot, "compound-converge")
+    const agentsRoot = path.join(codexRoot, "agents", "convergo")
+    const manifestRoot = path.join(codexRoot, "convergo")
     const unsafeTarget = path.join(codexRoot, "keep.toml")
 
     try {
@@ -58,7 +58,7 @@ describe("Codex agent install", () => {
         path.join(manifestRoot, "install-manifest.json"),
         JSON.stringify({
           version: 1,
-          pluginName: "compound-converge",
+          pluginName: "convergo",
           skills: [],
           prompts: [],
           agents: ["old-agent.toml", "../keep.toml"],

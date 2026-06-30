@@ -1,8 +1,14 @@
-# Compound Converge
+# Convergo
 
-Compound Converge is an opinionated, convergence-focused fork of
+> Coding-agent **plan → review → build** loops that actually terminate.
+
+<!-- hero image: diverging-vs-converging loop diagram (docs/assets/convergo-hero.png) — pending from Iris -->
+
+**Convergo** is an opinionated, convergence-focused fork of
 [Compound Engineering](https://github.com/EveryInc/compound-engineering-plugin)
 (CE) for coding-agent workflows where review loops need to terminate cleanly.
+**Who it's for:** engineers doing correctness-critical, reviewable work with AI
+coding agents — not quick spikes or throwaway prototypes.
 
 CE is a strong methodology: plan before implementation, execute with tests,
 review to catch issues and calibrate judgment, and compound the learning for the
@@ -13,13 +19,13 @@ grows round by round. In the worst case the plan starts accumulating
 implementation details and pseudo-code, which then creates a new class of review
 failures.
 
-Compound Converge keeps the useful CE discipline and adds convergence rules:
+Convergo keeps the useful CE discipline and adds convergence rules:
 right-sized plans, behavior-contract thresholds for high-risk or missing
 behavior decisions, role-specific review feedback handling, fresh-reviewer exit
 gates, and Codex-only planner-reviewer and worker-reviewer loops with a human
 decision point between planning and implementation.
 
-## Why Compound Converge Exists
+## Why Convergo Exists
 
 The failure mode this project targets is not "the reviewer found a bug." That is
 expected. The failure mode is non-convergence:
@@ -41,7 +47,7 @@ sequence of small patches from hiding a bigger issue.
 
 ## Does It Fit Your Case?
 
-Compound Converge is optimized for software engineering work where correctness,
+Convergo is optimized for software engineering work where correctness,
 testability, and reviewability matter more than speed of iteration. It is a
 TDD-oriented workflow for code changes with explicit acceptance criteria.
 
@@ -105,7 +111,7 @@ plan or contract repair, not eight rounds of local patches.
 
 The base skills work across supported agent hosts. Codex adds a stronger
 execution surface because it can create, continue, and inspect real Codex
-threads. Compound Converge uses that capability to run monitored planner,
+threads. Convergo uses that capability to run monitored planner,
 reviewer, worker, and QA threads with callback transport, heartbeat waiting,
 focused re-review, and fresh-reviewer exit gates.
 
@@ -170,18 +176,22 @@ packaged as `cvg-*` agents for Claude Code and Codex.
 
 ## Install
 
+> Note: the project is named **Convergo**, but its marketplace / package id is
+> still `convergo` (the repository has not been renamed yet). Use the
+> ids exactly as shown in the commands below.
+
 ### Claude Code
 
 ```text
-/plugin marketplace add gomilesfd/compound-converge
-/plugin install compound-converge
+/plugin marketplace add gomilesf/convergo
+/plugin install convergo
 ```
 
 The Claude plugin exposes only the six base skills: `/cvg-plan`, `/cvg-plan-review`, `/cvg-plan-review-feedback`, `/cvg-work`, `/cvg-code-review`, and `/cvg-code-review-feedback`.
 
 ### Codex App
 
-Compound Converge is installed as a custom plugin marketplace:
+Convergo is installed as a custom plugin marketplace:
 
 1. In the Codex app, open **Plugins** from the sidebar.
 2. Click **Add** or **Add plugin marketplace**.
@@ -189,12 +199,12 @@ Compound Converge is installed as a custom plugin marketplace:
 
    | Field | Value |
    | --- | --- |
-   | Source | `gomilesfd/compound-converge` |
+   | Source | `gomilesf/convergo` |
    | Git ref | `main` |
    | Sparse paths | leave blank |
 
 4. Click **Add marketplace**.
-5. Select **Compound Converge** and install **compound-converge**.
+5. Select **Convergo** and install **convergo**.
 6. From this repository checkout, install the auxiliary Codex agents:
 
    ```bash
@@ -208,11 +218,11 @@ Compound Converge is installed as a custom plugin marketplace:
 Register the marketplace, then install through the Codex `/plugins` TUI:
 
 ```bash
-codex plugin marketplace add gomilesfd/compound-converge
+codex plugin marketplace add gomilesf/convergo
 codex
 ```
 
-Inside Codex, run `/plugins`, choose **Compound Converge**, install **compound-converge**, then restart Codex.
+Inside Codex, run `/plugins`, choose **Convergo**, install **convergo**, then restart Codex.
 
 Install the auxiliary Codex agents from this repository checkout before restarting:
 
@@ -223,7 +233,7 @@ bun run install:codex-agents
 For a non-default Codex profile, run each step against the same `CODEX_HOME`:
 
 ```bash
-CODEX_HOME="$HOME/.codex/profiles/work" codex plugin marketplace add gomilesfd/compound-converge
+CODEX_HOME="$HOME/.codex/profiles/work" codex plugin marketplace add gomilesf/convergo
 CODEX_HOME="$HOME/.codex/profiles/work" codex
 CODEX_HOME="$HOME/.codex/profiles/work" bun run install:codex-agents
 ```
@@ -233,7 +243,7 @@ CODEX_HOME="$HOME/.codex/profiles/work" bun run install:codex-agents
 In Cursor Agent chat, install from the plugin marketplace:
 
 ```text
-/add-plugin compound-converge
+/add-plugin convergo
 ```
 
 ### OpenCode
@@ -242,7 +252,7 @@ Add the plugin to your global or project `opencode.json`:
 
 ```json
 {
-  "plugin": ["compound-converge@git+https://github.com/gomilesfd/compound-converge.git"]
+  "plugin": ["convergo@git+https://github.com/gomilesf/convergo.git"]
 }
 ```
 
@@ -251,13 +261,13 @@ Restart OpenCode after changing the config. The OpenCode plugin registers the ba
 ### Pi
 
 ```bash
-pi install git:github.com/gomilesfd/compound-converge
+pi install git:github.com/gomilesf/convergo
 ```
 
 ### Gemini CLI
 
 ```bash
-gemini extensions install https://github.com/gomilesfd/compound-converge
+gemini extensions install https://github.com/gomilesf/convergo
 ```
 
 ## Local Development
@@ -285,13 +295,13 @@ codex plugin marketplace add "$PWD"
 codex
 ```
 
-Then run `/plugins`, choose **Compound Converge**, and install **compound-converge**.
+Then run `/plugins`, choose **Convergo**, and install **convergo**.
 
 OpenCode:
 
 ```json
 {
-  "plugin": ["/path/to/compound-converge"]
+  "plugin": ["/path/to/convergo"]
 }
 ```
 
@@ -309,7 +319,7 @@ gemini extensions install "$PWD"
 
 ## License and Attribution
 
-Compound Converge is MIT licensed. Portions of the skill and agent prompt
+Convergo is MIT licensed. Portions of the skill and agent prompt
 content are adapted from the MIT-licensed
 [Compound Engineering](https://github.com/EveryInc/compound-engineering-plugin)
 plugin. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

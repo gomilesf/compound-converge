@@ -4,7 +4,7 @@ Add Compound Converge to the `plugin` array in your global or project `opencode.
 
 ```json
 {
-  "plugin": ["compound-converge@git+https://github.com/gomilesfd/compound-converge.git"]
+  "plugin": ["convergo@git+https://github.com/gomilesf/convergo.git"]
 }
 ```
 
@@ -16,7 +16,7 @@ From this checkout, point OpenCode at the package path:
 
 ```json
 {
-  "plugin": ["/path/to/compound-converge"]
+  "plugin": ["/path/to/convergo"]
 }
 ```
 

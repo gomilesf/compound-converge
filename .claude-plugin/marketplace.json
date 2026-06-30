@@ -1,8 +1,8 @@
 {
-  "name": "compound-converge-plugin",
+  "name": "convergo-plugin",
   "owner": {
-    "name": "gomilesfd",
-    "url": "https://github.com/gomilesfd"
+    "name": "gomilesf",
+    "url": "https://github.com/gomilesf"
   },
   "metadata": {
     "description": "Plugin marketplace for Compound Converge base workflow skills",
@@ -10,13 +10,13 @@
   },
   "plugins": [
     {
-      "name": "compound-converge",
+      "name": "convergo",
       "description": "Base fresh-reviewer workflow skills for planning, implementation, and review.",
       "author": {
-        "name": "gomilesfd",
-        "url": "https://github.com/gomilesfd"
+        "name": "gomilesf",
+        "url": "https://github.com/gomilesf"
       },
-      "homepage": "https://github.com/gomilesfd/compound-converge",
+      "homepage": "https://github.com/gomilesf/convergo",
       "tags": [
         "agent-skills",
         "claude-code",
