@@ -1,11 +1,11 @@
 {
-  "name": "compound-converge-plugin",
+  "name": "convergo-plugin",
   "interface": {
     "displayName": "Compound Converge"
   },
   "plugins": [
     {
-      "name": "compound-converge",
+      "name": "convergo",
       "source": {
         "source": "local",
         "path": "./plugins/codex"

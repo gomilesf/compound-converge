@@ -1,13 +1,13 @@
 {
-  "name": "compound-converge",
+  "name": "convergo",
   "version": "0.1.0",
   "description": "Fresh-reviewer convergence workflow skills for planning, implementation, and review.",
   "author": {
-    "name": "gomilesfd",
-    "url": "https://github.com/gomilesfd"
+    "name": "gomilesf",
+    "url": "https://github.com/gomilesf"
   },
-  "homepage": "https://github.com/gomilesfd/compound-converge",
-  "repository": "https://github.com/gomilesfd/compound-converge",
+  "homepage": "https://github.com/gomilesf/convergo",
+  "repository": "https://github.com/gomilesf/convergo",
   "license": "MIT",
   "keywords": [
     "agent-skills",

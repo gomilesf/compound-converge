@@ -51,7 +51,7 @@ Create a per-review audit directory:
 
 ```bash
 RUN_ID=$(date +%Y%m%d-%H%M%S)-$(head -c4 /dev/urandom | od -An -tx1 | tr -d ' ')
-mkdir -p "/tmp/compound-converge/cvg-plan-review/$RUN_ID"
+mkdir -p "/tmp/convergo/cvg-plan-review/$RUN_ID"
 ```
 
 Use this run id for auxiliary persona artifacts and the final review artifact.
@@ -136,7 +136,7 @@ Auxiliary coverage must be an object keyed by reviewer name:
     "agent_role": "generic-subagent",
     "agent_id": "<subagent id, child session id, or null>",
     "thread_id": "<child thread/session id when exposed, or null>",
-    "artifact_path": "/tmp/compound-converge/cvg-plan-review/<run-id>/<reviewer-name>.json",
+    "artifact_path": "/tmp/convergo/cvg-plan-review/<run-id>/<reviewer-name>.json",
     "artifact_written": true
   }
 }
@@ -149,7 +149,7 @@ inline fallback with the same reviewer persona.
 Each persona reviewer is read-only. It may inspect the plan, linked contract,
 and codebase with non-mutating commands, but must not edit files, change
 branches, commit, push, or create external artifacts except its own audit JSON
-under `/tmp/compound-converge/cvg-plan-review/<run-id>/`.
+under `/tmp/convergo/cvg-plan-review/<run-id>/`.
 
 Every persona prompt must include this boundary:
 
@@ -178,7 +178,7 @@ Ask each persona reviewer to return:
 ```
 
 The persona must write that same JSON object to
-`/tmp/compound-converge/cvg-plan-review/<run-id>/<reviewer-name>.json` before
+`/tmp/convergo/cvg-plan-review/<run-id>/<reviewer-name>.json` before
 returning it. The returned response must be one raw JSON object only: no
 markdown fence, prose, citations, memory citations, or trailing text. If the
 artifact write fails, still return the raw JSON.
@@ -193,7 +193,7 @@ coverage line. If a selected persona does not leave its artifact file, set
 Start with an auxiliary coverage line:
 
 ```text
-Audit artifact: /tmp/compound-converge/cvg-plan-review/<run-id>/
+Audit artifact: /tmp/convergo/cvg-plan-review/<run-id>/
 Auxiliary coverage: feasibility-reviewer=<dispatched|inline|skipped|failed>, security-lens-reviewer=<dispatched|inline|skipped|failed>, scope-guardian-reviewer=<dispatched|inline|skipped|failed>
 ```
 
@@ -203,9 +203,9 @@ unavailable, use `inline`.
 
 Before responding, write:
 
-- `/tmp/compound-converge/cvg-plan-review/<run-id>/review.json` with the merged
+- `/tmp/convergo/cvg-plan-review/<run-id>/review.json` with the merged
   findings, object-form `auxiliary_coverage`, verdict, and artifact path.
-- `/tmp/compound-converge/cvg-plan-review/<run-id>/metadata.json` with:
+- `/tmp/convergo/cvg-plan-review/<run-id>/metadata.json` with:
 
 ```json
 {
@@ -223,7 +223,7 @@ the full object-form auxiliary coverage with `persona`, `agent_role`,
 selected, skipped, failed, or inline reviewer.
 
 If this review is completed as part of an orchestrated callback workflow, include
-`Audit artifact: /tmp/compound-converge/cvg-plan-review/<run-id>/` in the
+`Audit artifact: /tmp/convergo/cvg-plan-review/<run-id>/` in the
 callback text.
 
 If no blocking findings exist, the result is a clean plan verdict.

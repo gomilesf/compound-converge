@@ -177,14 +177,14 @@ packaged as `cvg-*` agents for Claude Code and Codex.
 ## Install
 
 > Note: the project is named **Convergo**, but its marketplace / package id is
-> still `compound-converge` (the repository has not been renamed yet). Use the
+> still `convergo` (the repository has not been renamed yet). Use the
 > ids exactly as shown in the commands below.
 
 ### Claude Code
 
 ```text
-/plugin marketplace add gomilesfd/compound-converge
-/plugin install compound-converge
+/plugin marketplace add gomilesf/convergo
+/plugin install convergo
 ```
 
 The Claude plugin exposes only the six base skills: `/cvg-plan`, `/cvg-plan-review`, `/cvg-plan-review-feedback`, `/cvg-work`, `/cvg-code-review`, and `/cvg-code-review-feedback`.
@@ -199,12 +199,12 @@ Convergo is installed as a custom plugin marketplace:
 
    | Field | Value |
    | --- | --- |
-   | Source | `gomilesfd/compound-converge` |
+   | Source | `gomilesf/convergo` |
    | Git ref | `main` |
    | Sparse paths | leave blank |
 
 4. Click **Add marketplace**.
-5. Select **Convergo** and install **compound-converge**.
+5. Select **Convergo** and install **convergo**.
 6. From this repository checkout, install the auxiliary Codex agents:
 
    ```bash
@@ -218,11 +218,11 @@ Convergo is installed as a custom plugin marketplace:
 Register the marketplace, then install through the Codex `/plugins` TUI:
 
 ```bash
-codex plugin marketplace add gomilesfd/compound-converge
+codex plugin marketplace add gomilesf/convergo
 codex
 ```
 
-Inside Codex, run `/plugins`, choose **Convergo**, install **compound-converge**, then restart Codex.
+Inside Codex, run `/plugins`, choose **Convergo**, install **convergo**, then restart Codex.
 
 Install the auxiliary Codex agents from this repository checkout before restarting:
 
@@ -233,7 +233,7 @@ bun run install:codex-agents
 For a non-default Codex profile, run each step against the same `CODEX_HOME`:
 
 ```bash
-CODEX_HOME="$HOME/.codex/profiles/work" codex plugin marketplace add gomilesfd/compound-converge
+CODEX_HOME="$HOME/.codex/profiles/work" codex plugin marketplace add gomilesf/convergo
 CODEX_HOME="$HOME/.codex/profiles/work" codex
 CODEX_HOME="$HOME/.codex/profiles/work" bun run install:codex-agents
 ```
@@ -243,7 +243,7 @@ CODEX_HOME="$HOME/.codex/profiles/work" bun run install:codex-agents
 In Cursor Agent chat, install from the plugin marketplace:
 
 ```text
-/add-plugin compound-converge
+/add-plugin convergo
 ```
 
 ### OpenCode
@@ -252,7 +252,7 @@ Add the plugin to your global or project `opencode.json`:
 
 ```json
 {
-  "plugin": ["compound-converge@git+https://github.com/gomilesfd/compound-converge.git"]
+  "plugin": ["convergo@git+https://github.com/gomilesf/convergo.git"]
 }
 ```
 
@@ -261,13 +261,13 @@ Restart OpenCode after changing the config. The OpenCode plugin registers the ba
 ### Pi
 
 ```bash
-pi install git:github.com/gomilesfd/compound-converge
+pi install git:github.com/gomilesf/convergo
 ```
 
 ### Gemini CLI
 
 ```bash
-gemini extensions install https://github.com/gomilesfd/compound-converge
+gemini extensions install https://github.com/gomilesf/convergo
 ```
 
 ## Local Development
@@ -295,13 +295,13 @@ codex plugin marketplace add "$PWD"
 codex
 ```
 
-Then run `/plugins`, choose **Convergo**, and install **compound-converge**.
+Then run `/plugins`, choose **Convergo**, and install **convergo**.
 
 OpenCode:
 
 ```json
 {
-  "plugin": ["/path/to/compound-converge"]
+  "plugin": ["/path/to/convergo"]
 }
 ```
 

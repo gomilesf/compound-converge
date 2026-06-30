@@ -45,7 +45,7 @@ const AGENT_TARGETS = [
     name: "codex",
     extension: ".toml",
     source: "agents-src/codex",
-    target: "plugins/codex/.codex/agents/compound-converge",
+    target: "plugins/codex/.codex/agents/convergo",
   },
 ] as const
 

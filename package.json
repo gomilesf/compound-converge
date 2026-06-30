@@ -1,20 +1,20 @@
 {
-  "name": "compound-converge",
+  "name": "convergo",
   "version": "0.1.0",
   "description": "Fresh-reviewer convergence workflow skills for coding agents",
   "type": "module",
   "private": true,
-  "main": ".opencode/plugins/compound-converge.js",
+  "main": ".opencode/plugins/convergo.js",
   "pi": {
     "extensions": [
-      "./.pi/extensions/compound-converge.ts"
+      "./.pi/extensions/convergo.ts"
     ],
     "skills": [
       "./plugins/generic/skills"
     ]
   },
-  "homepage": "https://github.com/gomilesfd/compound-converge",
-  "repository": "https://github.com/gomilesfd/compound-converge",
+  "homepage": "https://github.com/gomilesf/convergo",
+  "repository": "https://github.com/gomilesf/convergo",
   "license": "MIT",
   "keywords": [
     "ai",

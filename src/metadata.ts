@@ -39,9 +39,9 @@ type MarketplaceManifest = {
   }>
 }
 
-const PLUGIN_NAME = "compound-converge"
+const PLUGIN_NAME = "convergo"
 const CODEX_INSTALL_MANIFEST = "install-manifest.json"
-const EXPECTED_REPOSITORY = "https://github.com/gomilesfd/compound-converge"
+const EXPECTED_REPOSITORY = "https://github.com/gomilesf/convergo"
 export const BASE_SKILLS = ["cvg-code-review", "cvg-code-review-feedback", "cvg-plan", "cvg-plan-review", "cvg-plan-review-feedback", "cvg-work"].sort()
 export const CODEX_ONLY_SKILLS = ["cvg-build-loop", "cvg-multi-session", "cvg-plan-loop"].sort()
 export const CODEX_SKILLS = [...BASE_SKILLS, ...CODEX_ONLY_SKILLS].sort()
@@ -63,7 +63,7 @@ export const PLATFORM_SKILL_ROOTS = {
 export const PLATFORM_AGENT_ROOTS = {
   sourceClaude: "agents-src/claude",
   sourceCodex: "agents-src/codex",
-  codex: "plugins/codex/.codex/agents/compound-converge",
+  codex: "plugins/codex/.codex/agents/convergo",
   claude: "plugins/claude/agents",
 } as const
 
@@ -99,10 +99,10 @@ const REQUIRED_FILES = [
   "agents-src/claude",
   "agents-src/codex",
   "plugins/claude/agents",
-  "plugins/codex/.codex/agents/compound-converge",
+  "plugins/codex/.codex/agents/convergo",
   "gemini-extension.json",
-  ".opencode/plugins/compound-converge.js",
-  ".pi/extensions/compound-converge.ts",
+  ".opencode/plugins/convergo.js",
+  ".pi/extensions/convergo.ts",
 ]
 
 const LEGACY_ROOT_PLUGIN_PATHS = [
@@ -363,13 +363,13 @@ export async function validateProductization(root = process.cwd()): Promise<Prod
   const expectedVersion = packageJson?.version
   validateIdentity(errors, "package.json", packageJson, expectedVersion)
 
-  if (packageJson?.main !== ".opencode/plugins/compound-converge.js") {
+  if (packageJson?.main !== ".opencode/plugins/convergo.js") {
     errors.push("package.json: main must point at the OpenCode plugin entrypoint")
   }
   if (packageJson?.scripts?.["install:codex-agents"] !== "bun run scripts/install-codex-agents.ts") {
     errors.push("package.json: install:codex-agents must run scripts/install-codex-agents.ts")
   }
-  if (JSON.stringify(packageJson?.pi?.extensions ?? []) !== JSON.stringify(["./.pi/extensions/compound-converge.ts"])) {
+  if (JSON.stringify(packageJson?.pi?.extensions ?? []) !== JSON.stringify(["./.pi/extensions/convergo.ts"])) {
     errors.push("package.json: pi.extensions must expose the Pi extension")
   }
   if (JSON.stringify(packageJson?.pi?.skills ?? []) !== JSON.stringify(["./plugins/generic/skills"])) {

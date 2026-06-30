@@ -69,7 +69,7 @@ Create a per-review audit directory before dispatching auxiliary reviewers:
 
 ```bash
 RUN_ID=$(date +%Y%m%d-%H%M%S)-$(head -c4 /dev/urandom | od -An -tx1 | tr -d ' ')
-mkdir -p "/tmp/compound-converge/cvg-code-review/$RUN_ID"
+mkdir -p "/tmp/convergo/cvg-code-review/$RUN_ID"
 ```
 
 Use this run id for every auxiliary reviewer and for the final review artifact.
@@ -134,7 +134,7 @@ Auxiliary coverage must be an object keyed by reviewer name:
     "agent_role": "<requested agent_type, for example cvg-security-reviewer>",
     "agent_id": "<spawn_agent id, child session id, or null>",
     "thread_id": "<child thread/session id when exposed, or null>",
-    "artifact_path": "/tmp/compound-converge/cvg-code-review/<run-id>/<reviewer-name>.json",
+    "artifact_path": "/tmp/convergo/cvg-code-review/<run-id>/<reviewer-name>.json",
     "artifact_written": true
   }
 }
@@ -154,7 +154,7 @@ Use only the review prompt, plan, diff, and repository files you read for this
 review. Do not consult project memory, prior sessions, rollout summaries, or
 external history.
 
-Audit artifact: /tmp/compound-converge/cvg-code-review/<run-id>/<reviewer-name>.json
+Audit artifact: /tmp/convergo/cvg-code-review/<run-id>/<reviewer-name>.json
 Before returning, write the exact JSON object you will return to that artifact
 path. This is the only write operation you may perform. If the write fails,
 still return the JSON and include no extra prose.
@@ -207,9 +207,9 @@ Treating a contract gap as a code bug causes whack-a-mole.
 
 Before responding, write:
 
-- `/tmp/compound-converge/cvg-code-review/<run-id>/review.json` with the merged
+- `/tmp/convergo/cvg-code-review/<run-id>/review.json` with the merged
   findings, object-form `auxiliary_coverage`, verdict, and artifact path.
-- `/tmp/compound-converge/cvg-code-review/<run-id>/metadata.json` with:
+- `/tmp/convergo/cvg-code-review/<run-id>/metadata.json` with:
 
 ```json
 {
@@ -224,7 +224,7 @@ Before responding, write:
 Start the response with:
 
 ```text
-Audit artifact: /tmp/compound-converge/cvg-code-review/<run-id>/
+Audit artifact: /tmp/convergo/cvg-code-review/<run-id>/
 Auxiliary coverage: cvg-correctness-reviewer=<dispatched|inline|failed>, cvg-testing-reviewer=<dispatched|inline|failed>, cvg-security-reviewer=<dispatched|inline|skipped|failed>, cvg-adversarial-reviewer=<dispatched|inline|skipped|failed>, cvg-reliability-reviewer=<dispatched|inline|skipped|failed>
 ```
 
@@ -234,7 +234,7 @@ the full object-form auxiliary coverage with `agent_role`, `agent_id`,
 skipped, failed, or inline reviewer.
 
 If this review is completed as part of an orchestrated callback workflow, include
-`Audit artifact: /tmp/compound-converge/cvg-code-review/<run-id>/` in the
+`Audit artifact: /tmp/convergo/cvg-code-review/<run-id>/` in the
 callback text.
 
 Use one of these verdicts:

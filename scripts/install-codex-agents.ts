@@ -27,5 +27,5 @@ const result = await installCodexAgents({
   codexRoot: readCodexRootArg(process.argv.slice(2)),
 })
 
-console.log(`Installed ${result.agents.length} compound-converge Codex agents to ${result.agentsRoot}`)
+console.log(`Installed ${result.agents.length} convergo Codex agents to ${result.agentsRoot}`)
 console.log(`Wrote ${result.manifestPath}`)

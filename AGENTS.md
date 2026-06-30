@@ -1,6 +1,6 @@
 # Agent Instructions
 
-This repository is the root of the `compound-converge` coding-agent plugin and the marketplace metadata used to distribute it.
+This repository is the root of the `convergo` coding-agent plugin and the marketplace metadata used to distribute it.
 
 `AGENTS.md` is the canonical repo instruction file. Root `CLAUDE.md` and `GEMINI.md` exist as compatibility shims for tools that look for those filenames.
 
