@@ -102,7 +102,7 @@ stating the review must be independent.
 Reviewer callback template:
 
 ```text
-I am the fresh code reviewer. My session/thread id is <reviewer-thread-id>. Orchestrator thread id: <orchestrator-id>. This first-pass full code review is complete. Verdict: <ready / not ready>. Findings: <none or numbered blocker list>. Please decide the next step.
+I am the fresh code reviewer. My session/thread id is <reviewer-thread-id>. Orchestrator thread id: <orchestrator-id>. This first-pass full code review is complete. Verdict: <ready to merge / ready with fixes / not ready>. Findings: <none or numbered blocker list>. Non-blocking P2 notes: <none or brief list>. Please decide the next step.
 ```
 
 After verifying the reviewer thread with `read_thread`, send the reviewer its
@@ -195,9 +195,16 @@ Final implementation exit condition:
 - complete first code review,
 - no blocking findings of any class, including code bugs, contract gaps, unsafe side-effect paths, missing real surfaces, missing lifecycle coverage, or missing required gates.
 - audit artifact shows every selected auxiliary reviewer dispatched with a
-  non-null `agent_id` or `thread_id`; inline auxiliary coverage cannot satisfy the final implementation exit condition.
+  non-null `agent_id`; inline auxiliary coverage cannot satisfy the final implementation exit condition.
 
-If the new fresh reviewer finds blockers, repeat from Phase 3.
+A "ready with fixes" verdict (only non-blocking P2 findings remain) satisfies
+the exit condition; carry the P2 list into the completion summary.
+
+If the new fresh reviewer finds blockers, repeat from Phase 3. Each Phase 3-5
+cycle is one round; after 3 rounds without a clean exit, stop and escalate to
+the user with all open findings and their adjudications (Gate 5 round cap).
+Apply the Gate 5 adjudication ratchet: findings previously adjudicated invalid
+or out of scope cannot re-block without new evidence.
 
 ## Phase 6: QA and External Verification
 

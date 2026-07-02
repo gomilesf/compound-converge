@@ -108,8 +108,27 @@ The exit sequence is:
 
 For code-review final exits, the final fresh reviewer prompt must include
 `Review mode: final-fresh-exit`. Its audit artifact must show every selected
-auxiliary reviewer dispatched with a non-null `agent_id` or `thread_id`;
+auxiliary reviewer dispatched with a non-null `agent_id`;
 inline auxiliary coverage cannot satisfy the final fresh-reviewer exit condition.
+
+A "ready with fixes" verdict (plan criteria met, only non-blocking P2 findings
+remain) satisfies the exit condition; carry the remaining P2 list into the
+completion summary instead of looping on it.
+
+**Round cap.** One round is one full cycle of steps 1-4. After 3 rounds without
+a clean fresh review, stop the loop and escalate to the user with all open
+findings and their adjudications. Do not keep looping past the cap.
+
+**Adjudication ratchet.** A finding adjudicated invalid or out of scope by the
+role-specific feedback skill in an earlier round (same file, line, and issue)
+cannot re-block a later round unless new evidence appears. The orchestrator
+relays the prior adjudication back to the reviewer; the reviewer decides
+whether new evidence overrides it.
+
+Audit artifact identity fields are self-reported by the reviewer. Treat them as
+an audit trail, not proof of dispatch. If the artifact is missing, identity
+fields are null, or the callback contradicts the artifact, treat the exit gate
+as unmet.
 
 ## Specialist Prompt Checklist
 

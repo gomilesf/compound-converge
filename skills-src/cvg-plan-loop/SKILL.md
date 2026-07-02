@@ -95,7 +95,7 @@ links its authorities and the reviewer can read the worktree.
 Reviewer callback template:
 
 ```text
-I am the fresh reviewer. My session/thread id is <reviewer-thread-id>. Orchestrator thread id: <orchestrator-id>. This first-pass full review is complete. Verdict: <passed / blocking findings>. Findings: <none or numbered concise list>. Please decide the next step.
+I am the fresh reviewer. My session/thread id is <reviewer-thread-id>. Orchestrator thread id: <orchestrator-id>. This first-pass full review is complete. Verdict: <clean / blocking findings>. Findings: <none or numbered concise list>. Please decide the next step.
 ```
 
 After verifying the reviewer thread with `read_thread`, send the reviewer its
@@ -169,6 +169,12 @@ Final exit condition:
 - no blocking findings.
 
 Only then can the orchestrator declare the plan loop complete.
+
+If the final fresh reviewer finds blockers, repeat from Phase 3. Each
+Phase 3-5 cycle is one round; after 3 rounds without a clean final review,
+stop and escalate to the user with all open findings and their adjudications
+(Gate 5 round cap). Apply the Gate 5 adjudication ratchet: findings previously
+adjudicated invalid or out of scope cannot re-block without new evidence.
 
 ## Completion Summary
 
