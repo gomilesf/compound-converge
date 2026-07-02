@@ -250,12 +250,12 @@ describe("skill conventions", () => {
   })
 
   test("build loop fresh reviewer prompts stay independent", () => {
-    for (const relativeRoot of [PLATFORM_SKILL_ROOTS.source, PLATFORM_SKILL_ROOTS.codex]) {
+    for (const relativeRoot of [PLATFORM_SKILL_ROOTS.source, PLATFORM_SKILL_ROOTS.codex, PLATFORM_SKILL_ROOTS.claude]) {
       const skillContent = readFileSync(path.join(ROOT, relativeRoot, "cvg-build-loop", "SKILL.md"), "utf8")
 
       expect(skillContent).toContain("Fresh reviewer prompts must not include a `Relevant review history` narrative")
       expect(skillContent).toContain("Do not consult project memory, prior sessions, rollout summaries, or external history.")
-      expect(skillContent).toContain("After verifying the reviewer thread with `read_thread`, send the reviewer its")
+      expect(skillContent).toContain("After verifying the reviewer thread with `read_thread`, send the")
       expect(skillContent).toContain("Review mode: focused-re-review")
       expect(skillContent).toContain("Do not ask the focused")
       expect(skillContent).toContain("`Risk areas to inspect independently:`")
@@ -277,6 +277,8 @@ describe("skill conventions", () => {
       path.join(PLATFORM_SKILL_ROOTS.source, "cvg-build-loop", "references", "cvg-multi-session-protocol.md"),
       path.join(PLATFORM_SKILL_ROOTS.codex, "cvg-plan-loop", "references", "cvg-multi-session-protocol.md"),
       path.join(PLATFORM_SKILL_ROOTS.codex, "cvg-build-loop", "references", "cvg-multi-session-protocol.md"),
+      path.join(PLATFORM_SKILL_ROOTS.claude, "cvg-plan-loop", "references", "cvg-multi-session-protocol.md"),
+      path.join(PLATFORM_SKILL_ROOTS.claude, "cvg-build-loop", "references", "cvg-multi-session-protocol.md"),
     ]) {
       const content = readFileSync(path.join(ROOT, relativePath), "utf8")
 
@@ -291,16 +293,22 @@ describe("skill conventions", () => {
     )
 
     for (const requiredText of [
-      "Use `create_thread` to create a new specialist thread unless the user explicitly named an existing Codex thread.",
-      "Use `send_message_to_thread` to continue an existing specialist thread.",
-      "Use `read_thread` to verify every specialist thread id immediately after creation or selection.",
-      "Your verified Codex thread id is <specialist-thread-id>",
-      "Do not use multi-agent subagents, task agents, context-fork agents, local shell jobs, or background processes as substitutes.",
-      "If `read_thread` cannot read the id, stop the workflow and retry with Codex thread tools or report a tool-layer blocker.",
-      "The specialist must send its callback to the orchestrator thread.",
+      "### Gate 0: Transport Binding",
+      "| Spawn specialist | `create_thread` | `Agent` tool with `run_in_background: true` |",
+      "| Continue specialist | `send_message_to_thread` | `SendMessage` to the agent id |",
+      "the harness re-invokes the orchestrator on `<task-notification>`",
+      "resumed from its\npersisted transcript when continued with `SendMessage`",
+      "do not flatten a specialist's internal delegation into\nthe orchestrator",
+      "Spawn a new specialist with the spawn operation unless the user explicitly named an existing specialist session.",
+      "Continue an existing specialist with the continue operation.",
+      "Verify every specialist id immediately after creation or selection",
+      "Your verified thread id is <specialist-thread-id>",
+      "Do not use local shell jobs, detached processes, or inline role-play in the orchestrator turn as substitutes for a real specialist session.",
+      "stop the workflow and retry with the platform specialist tools or report a tool-layer blocker.",
+      "the specialist must send its callback to the orchestrator thread",
       "If the specialist creates or receives an audit artifact, the callback must include `Audit artifact: <absolute path>`.",
       "Destination orchestrator Codex thread id: <orchestrator-thread-id>",
-      "Do not emulate a heartbeat with `sleep`, repeated `read_thread`, shell loops, timers, or repeated status checks in the same assistant turn.",
+      "Do not emulate waiting with `sleep`, repeated reads, shell loops, timers, or repeated status checks in the same assistant turn — on either platform.",
       "do not replace the missing heartbeat with manual polling.",
       "Same-reviewer pass is never the final exit condition.",
       "inline auxiliary coverage cannot satisfy the final fresh-reviewer exit condition.",
