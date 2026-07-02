@@ -1,6 +1,6 @@
 ---
 name: cvg-plan-loop
-description: Orchestrate a monitored planning loop with a planner, fresh plan reviewers, focused re-review, callback transport, and strict fresh-reviewer exit gates. Runs on Codex threads or Claude Code background agents. Use when the user asks to create or revise a plan through supervised specialist sessions.
+description: Orchestrate a monitored planning loop where a planner drafts the plan and fresh plan reviewers gate the exit. Use when the user asks to create or revise a plan through supervised specialist sessions on Codex threads or Claude Code background agents.
 argument-hint: "[planning goal, requirements path, behavior contract path, or planning prompt]"
 ---
 
@@ -40,8 +40,12 @@ Classify dirty files:
 
 Spawn the planner as a real specialist session (Gate 0 spawn operation) and
 record the id returned by the tool. Verify it per Gate 1; if it is not
-verifiable, do not continue. (Codex) After verification, send the planner its
-verified thread id before creating the heartbeat.
+verifiable, do not continue.
+
+<!-- codex -->
+(Codex) After verification, send the planner its verified thread id before
+creating the heartbeat.
+<!-- /codex -->
 
 Planner prompt must include:
 
@@ -66,7 +70,7 @@ Planner callback template:
 I am the planner. My specialist id is <planner-id>. This planning round is complete. Plan path: <absolute path>. Key status: <brief>. Please decide the next step.
 ```
 
-Complete the waiting handoff per Gate 3 and end the active turn. Do not use `sleep` or repeated reads to wait.
+Complete the waiting handoff per Gate 3 and end the active turn.
 
 ## Phase 2: Fresh Plan Review
 
@@ -97,7 +101,7 @@ Reviewer callback template:
 I am the fresh reviewer. My specialist id is <reviewer-id>. This first-pass full review is complete. Verdict: <clean / blocking findings>. Findings: <none or numbered concise list>. Please decide the next step.
 ```
 
-Complete the waiting handoff per Gate 3 and end the active turn while waiting. Do not manually poll.
+Complete the waiting handoff per Gate 3 and end the active turn while waiting.
 
 Blocking plan findings include:
 
@@ -183,5 +187,7 @@ Report:
 - callback transport status,
 - blockers and planner `cvg-plan-review-feedback` results,
 - final fresh reviewer verdict,
+<!-- codex -->
 - heartbeat cleanup (Codex),
+<!-- /codex -->
 - known gaps.

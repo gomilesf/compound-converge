@@ -58,6 +58,12 @@ Each skill directory must be self-contained. A `SKILL.md` file may reference fil
 
 If two skills need the same reference, duplicate the small reference file into each skill directory. Marketplace installs use versioned cache paths, so sibling or absolute source-repo paths are not portable.
 
+The `cvg-multi-session-protocol.md` copies inside the loop skills are generated: `bun run sync` renders them from `skills-src/cvg-multi-session/SKILL.md`. Never edit them by hand and never add them to `skills-src/`.
+
+## Platform Markers
+
+Skill markdown in `skills-src/` may wrap platform-specific blocks in standalone `<!-- codex -->`/`<!-- claude -->` ... `<!-- /codex -->`/`<!-- /claude -->` marker lines. `bun run sync` keeps only the matching platform's blocks in each generated root and removes the marker lines; the generic root must stay marker-free. Content every platform needs stays unmarked. Markers cannot nest and must open and close on their own lines.
+
 ## Runtime vs Authoring Context
 
 These root instruction files guide contributors to this source repository. Installed skills run in the user's target project and read that project's local instructions. Behavior required at runtime belongs inside the relevant `skills-src/<name>/SKILL.md` source file, then must be synced into the generated `plugins/*/skills/<name>/SKILL.md` copies.

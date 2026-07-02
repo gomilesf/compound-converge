@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test"
 import { readdirSync, readFileSync } from "node:fs"
 import path from "node:path"
 import { AUXILIARY_AGENT_NAMES, PLATFORM_SKILL_ROOTS } from "../src/metadata"
+import { PROTOCOL_CONSUMER_SKILLS, stripPlatform, type Platform } from "../src/platform-content"
 
 const ROOT = process.cwd()
 const NAME_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
@@ -255,7 +256,6 @@ describe("skill conventions", () => {
 
       expect(skillContent).toContain("Fresh reviewer prompts must not include a `Relevant review history` narrative")
       expect(skillContent).toContain("Do not consult project memory, prior sessions, rollout summaries, or external history.")
-      expect(skillContent).toContain("After verifying the reviewer thread with `read_thread`, send the")
       expect(skillContent).toContain("Review mode: focused-re-review")
       expect(skillContent).toContain("Do not ask the focused")
       expect(skillContent).toContain("`Risk areas to inspect independently:`")
@@ -264,26 +264,71 @@ describe("skill conventions", () => {
       expect(skillContent).toContain("inline auxiliary coverage cannot satisfy the final implementation exit condition")
       expect(skillContent).not.toContain("not exposed")
     }
+
+    for (const relativeRoot of [PLATFORM_SKILL_ROOTS.source, PLATFORM_SKILL_ROOTS.codex]) {
+      const skillContent = readFileSync(path.join(ROOT, relativeRoot, "cvg-build-loop", "SKILL.md"), "utf8")
+
+      expect(skillContent, relativeRoot).toContain("After verifying the reviewer thread with `read_thread`, send the")
+    }
+
+    const claudeContent = readFileSync(path.join(ROOT, PLATFORM_SKILL_ROOTS.claude, "cvg-build-loop", "SKILL.md"), "utf8")
+    expect(claudeContent).not.toContain("read_thread")
+    expect(claudeContent).not.toContain("(Codex)")
   })
 
-  test("loop protocol references preserve canonical cvg-multi-session gates", () => {
-    const canonical = contentAfterMarker(
-      readFileSync(path.join(ROOT, PLATFORM_SKILL_ROOTS.source, "cvg-multi-session", "SKILL.md"), "utf8"),
-      "## Non-Negotiable Protocol Gates",
+  test("loop protocol references preserve canonical cvg-multi-session gates per platform", () => {
+    const canonicalSource = readFileSync(
+      path.join(ROOT, PLATFORM_SKILL_ROOTS.source, "cvg-multi-session", "SKILL.md"),
+      "utf8",
     )
 
-    for (const relativePath of [
-      path.join(PLATFORM_SKILL_ROOTS.source, "cvg-plan-loop", "references", "cvg-multi-session-protocol.md"),
-      path.join(PLATFORM_SKILL_ROOTS.source, "cvg-build-loop", "references", "cvg-multi-session-protocol.md"),
-      path.join(PLATFORM_SKILL_ROOTS.codex, "cvg-plan-loop", "references", "cvg-multi-session-protocol.md"),
-      path.join(PLATFORM_SKILL_ROOTS.codex, "cvg-build-loop", "references", "cvg-multi-session-protocol.md"),
-      path.join(PLATFORM_SKILL_ROOTS.claude, "cvg-plan-loop", "references", "cvg-multi-session-protocol.md"),
-      path.join(PLATFORM_SKILL_ROOTS.claude, "cvg-build-loop", "references", "cvg-multi-session-protocol.md"),
+    for (const target of [
+      { root: PLATFORM_SKILL_ROOTS.codex, platform: "codex" as Platform },
+      { root: PLATFORM_SKILL_ROOTS.claude, platform: "claude" as Platform },
     ]) {
-      const content = readFileSync(path.join(ROOT, relativePath), "utf8")
+      const canonical = contentAfterMarker(
+        stripPlatform(canonicalSource, target.platform),
+        "## Non-Negotiable Protocol Gates",
+      )
+      const shippedSkill = readFileSync(path.join(ROOT, target.root, "cvg-multi-session", "SKILL.md"), "utf8")
+      expect(contentAfterMarker(shippedSkill, "## Non-Negotiable Protocol Gates"), target.root).toBe(canonical)
 
-      expect(contentAfterMarker(content, "## Non-Negotiable Protocol Gates"), relativePath).toBe(canonical)
+      for (const consumer of PROTOCOL_CONSUMER_SKILLS) {
+        const referencePath = path.join(target.root, consumer, "references", "cvg-multi-session-protocol.md")
+        const content = readFileSync(path.join(ROOT, referencePath), "utf8")
+
+        expect(content, referencePath).toContain("# Multi-Session Protocol Reference")
+        expect(contentAfterMarker(content, "## Non-Negotiable Protocol Gates"), referencePath).toBe(canonical)
+      }
     }
+  })
+
+  test("platform builds carry no markers or foreign platform sections", () => {
+    const markerRe = /^<!-- \/?(codex|claude) -->$/m
+
+    for (const relativeRoot of [PLATFORM_SKILL_ROOTS.codex, PLATFORM_SKILL_ROOTS.claude, PLATFORM_SKILL_ROOTS.generic]) {
+      for (const skill of listSkills().filter((entry) => entry.path.includes(relativeRoot))) {
+        expect(skill.content, skill.path).not.toMatch(markerRe)
+      }
+    }
+
+    const claudeProtocol = readFileSync(
+      path.join(ROOT, PLATFORM_SKILL_ROOTS.claude, "cvg-multi-session", "SKILL.md"),
+      "utf8",
+    )
+    expect(claudeProtocol).not.toContain("Heartbeat Prompt Checklist")
+    expect(claudeProtocol).not.toContain("automation_update")
+    expect(claudeProtocol).not.toContain("Callback transport block (Codex):")
+    expect(claudeProtocol).toContain("You are a background specialist agent.")
+
+    const codexProtocol = readFileSync(
+      path.join(ROOT, PLATFORM_SKILL_ROOTS.codex, "cvg-multi-session", "SKILL.md"),
+      "utf8",
+    )
+    expect(codexProtocol).toContain("Heartbeat Prompt Checklist")
+    expect(codexProtocol).toContain("Callback transport block (Codex):")
+    expect(codexProtocol).not.toContain("You are a background specialist agent.")
+    expect(codexProtocol).not.toContain("persisted transcript")
   })
 
   test("canonical cvg-multi-session protocol preserves hard orchestration gates", () => {

@@ -6,8 +6,7 @@ description: "Review implementation against the plan and contract. Distinguish c
 # Code Review
 
 Review the implementation against the plan. The goal is to verify that the
-plan's criteria are met and no P0/P1 bugs were introduced. Converge in as few
-rounds as possible.
+plan's criteria are met and no P0/P1 bugs were introduced.
 
 ## Input
 
@@ -45,7 +44,7 @@ Read:
 - The implementation notes at `docs/impl-notes/<issue-id>.md`, if present; read
   this before the diff to understand why the implementation looks the way it does
 - The diff (`git diff <base>..HEAD`)
-- Changed files in full, not just diff hunks; context matters
+- Changed files in full, not just diff hunks
 
 Fresh-review evidence boundary: Main reviewer must not consult project memory, prior sessions, rollout summaries, or external history.
 Use only explicit task input, the plan, linked contract, repo-local

@@ -10,6 +10,12 @@ import {
   PLATFORM_SKILL_ROOTS,
   validateProductization,
 } from "../src/metadata"
+import {
+  PROTOCOL_CONSUMER_SKILLS,
+  renderProtocolReference,
+  stripPlatform,
+  type Platform,
+} from "../src/platform-content"
 
 const ROOT = process.cwd()
 const PLUGIN_NAME = "convergo"
@@ -56,16 +62,34 @@ function listFiles(relativeRoot: string): string[] {
   return files.sort()
 }
 
-function expectSkillCopyMatchesSource(skillName: string, targetRoot: string): void {
+const PROTOCOL_REFERENCE_FILE = path.join("references", "cvg-multi-session-protocol.md")
+
+function expectSkillCopyMatchesSource(skillName: string, targetRoot: string, platform?: Platform): void {
   const sourceRoot = path.join(PLATFORM_SKILL_ROOTS.source, skillName)
   const targetSkillRoot = path.join(targetRoot, skillName)
   const sourceFiles = listFiles(sourceRoot)
+  const generatesProtocolReference =
+    platform !== undefined && (PROTOCOL_CONSUMER_SKILLS as readonly string[]).includes(skillName)
+  const expectedFiles = generatesProtocolReference ? [...sourceFiles, PROTOCOL_REFERENCE_FILE].sort() : sourceFiles
 
-  expect(listFiles(targetSkillRoot), targetSkillRoot).toEqual(sourceFiles)
+  expect(listFiles(targetSkillRoot), targetSkillRoot).toEqual(expectedFiles)
   for (const file of sourceFiles) {
     const sourceContent = readFileSync(path.join(ROOT, sourceRoot, file), "utf8")
     const targetContent = readFileSync(path.join(ROOT, targetSkillRoot, file), "utf8")
-    expect(targetContent, `${targetSkillRoot}/${file}`).toBe(sourceContent)
+    const expected =
+      platform !== undefined && file.endsWith(".md") ? stripPlatform(sourceContent, platform) : sourceContent
+    expect(targetContent, `${targetSkillRoot}/${file}`).toBe(expected)
+  }
+
+  if (generatesProtocolReference) {
+    const canonical = readFileSync(
+      path.join(ROOT, PLATFORM_SKILL_ROOTS.source, "cvg-multi-session", "SKILL.md"),
+      "utf8",
+    )
+    const targetContent = readFileSync(path.join(ROOT, targetSkillRoot, PROTOCOL_REFERENCE_FILE), "utf8")
+    expect(targetContent, `${targetSkillRoot}/${PROTOCOL_REFERENCE_FILE}`).toBe(
+      stripPlatform(renderProtocolReference(canonical, skillName), platform!),
+    )
   }
 }
 
@@ -182,10 +206,10 @@ describe("plugin metadata", () => {
 
   test("keeps generated skill copies in sync with source skills", () => {
     for (const skillName of CODEX_SKILLS) {
-      expectSkillCopyMatchesSource(skillName, PLATFORM_SKILL_ROOTS.codex)
+      expectSkillCopyMatchesSource(skillName, PLATFORM_SKILL_ROOTS.codex, "codex")
     }
     for (const skillName of CLAUDE_SKILLS) {
-      expectSkillCopyMatchesSource(skillName, PLATFORM_SKILL_ROOTS.claude)
+      expectSkillCopyMatchesSource(skillName, PLATFORM_SKILL_ROOTS.claude, "claude")
     }
     for (const skillName of BASE_SKILLS) {
       expectSkillCopyMatchesSource(skillName, PLATFORM_SKILL_ROOTS.generic)

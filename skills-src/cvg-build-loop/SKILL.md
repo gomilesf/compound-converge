@@ -1,6 +1,6 @@
 ---
 name: cvg-build-loop
-description: Orchestrate a monitored implementation loop with a worker, code reviewers, actor-local review feedback handling, QA gates, callback transport, and strict fresh-reviewer exit conditions. Runs on Codex threads or Claude Code background agents.
+description: Orchestrate a monitored implementation loop where a worker implements the plan and fresh code reviewers gate the exit. Use when the user asks to run a supervised implementation or build loop on Codex threads or Claude Code background agents.
 argument-hint: "[plan path, base commit, or implementation goal]"
 ---
 
@@ -55,8 +55,10 @@ likely files, broad surface checklists, previous reviewer risk hints, old
 commits, or repo policy summaries unless the user supplied them as task
 authority and they are not linked from the plan.
 
+<!-- codex -->
 (Codex) After verifying the worker thread with `read_thread`, send the worker
 its verified thread id before creating the heartbeat.
+<!-- /codex -->
 
 Worker completion callback template:
 
@@ -70,7 +72,7 @@ Worker blocker callback template:
 I am the worker. My specialist id is <worker-id>. I found a blocking contract gap. Gap: <id/summary>. Evidence: <files/tests>. Recommendation: <repair/escalation>. Please decide the next step.
 ```
 
-Complete the waiting handoff per Gate 3 and end the active turn. Do not use `sleep` or repeated reads to wait.
+Complete the waiting handoff per Gate 3 and end the active turn.
 
 ## Phase 2: Fresh Code Review
 
@@ -106,10 +108,12 @@ Reviewer callback template:
 I am the fresh code reviewer. My specialist id is <reviewer-id>. This first-pass full code review is complete. Verdict: <ready to merge / ready with fixes / not ready>. Findings: <none or numbered blocker list>. Non-blocking P2 notes: <none or brief list>. Please decide the next step.
 ```
 
+<!-- codex -->
 (Codex) After verifying the reviewer thread with `read_thread`, send the
 reviewer its verified thread id before creating the heartbeat.
+<!-- /codex -->
 
-Complete the waiting handoff per Gate 3 and end the active turn while waiting. Do not manually poll.
+Complete the waiting handoff per Gate 3 and end the active turn while waiting.
 
 Reviewer should report blocking findings only:
 
@@ -178,8 +182,6 @@ reviewer to dispatch auxiliary reviewers or synthesize inline auxiliary
 coverage.
 
 Complete the waiting handoff per Gate 3 and end the active turn.
-
-Same reviewer pass is not enough to exit.
 
 ## Phase 5: New Fresh Review
 
