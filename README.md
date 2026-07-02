@@ -10,174 +10,153 @@
 **Who it's for:** engineers doing correctness-critical, reviewable work with AI
 coding agents — not quick spikes or throwaway prototypes.
 
-CE is a strong methodology: plan before implementation, execute with tests,
-review to catch issues and calibrate judgment, and compound the learning for the
-next round. In real codebases, though, an unbounded review loop can fail to
-settle. A reviewer finds a missing surface, the planner patches that single
-point, the next review finds the same weakness from another angle, and the plan
-grows round by round. In the worst case the plan starts accumulating
-implementation details and pseudo-code, which then creates a new class of review
-failures.
+## The Problem
 
-Convergo keeps the useful CE discipline and adds convergence rules:
-right-sized plans, behavior-contract thresholds for high-risk or missing
-behavior decisions, role-specific review feedback handling, fresh-reviewer exit
-gates, and orchestrated planner-reviewer and worker-reviewer loops (Codex and
-Claude Code) with a human decision point between planning and implementation.
-
-## Why Convergo Exists
-
-The failure mode this project targets is not "the reviewer found a bug." That is
+CE's discipline is right: plan before implementation, execute with tests,
+review to catch issues. But in real codebases an unbounded review loop can fail
+to settle, and the failure mode is not "the reviewer found a bug" — that is
 expected. The failure mode is non-convergence:
 
 - plan review discovers one symptom at a time instead of the underlying missing
   surface, invariant, or behavior decision;
-- the planner responds by adding more text instead of stepping back to repair
-  the structure of the plan;
+- the planner responds by adding more text instead of repairing the structure
+  of the plan;
 - code review pushes the worker into local patches even when the feedback is
   really a plan gap, contract gap, or systemic design gap;
 - repeated rounds make the artifact larger, less precise, and more likely to
-  contain pseudo-code or implementation-shaped instructions.
+  accumulate pseudo-code — which then creates a new class of review failures.
 
-`cvg` changes the loop by forcing review feedback through an intake step before
-any repair. The planner or worker must decide whether a finding is local,
-pattern-level, plan-owned, contract-owned, systemic, stale, or blocked on a
-missing decision. That "step back" is the main difference: it prevents a
-sequence of small patches from hiding a bigger issue.
+One missing invariant across eight surfaces should become one plan repair, not
+eight rounds of local patches.
 
-## Does It Fit Your Case?
+## How Convergo Converges
 
-Convergo is optimized for software engineering work where correctness,
-testability, and reviewability matter more than speed of iteration. It is a
-TDD-oriented workflow for code changes with explicit acceptance criteria.
+Every rule below exists to bound the loop. They are enforced in the skills, not
+just described here.
 
-It is not the best default for quick spikes, throwaway experiments, or highly
-interactive UI exploration where the right answer emerges from rapid visual
-iteration. You can still use the base planning and review skills there, but the
-full plan/build loop is deliberately heavier than a fast prototype workflow.
+**Feedback goes through intake, not straight to edits.** When review blockers
+arrive, the same planner or worker that produced the artifact first classifies
+each finding — local code bug, pattern bug, verification gap, plan gap,
+contract gap, systemic design gap, stale, or blocked on a missing decision —
+and only then repairs what its role owns. Workers stop and call back on plan,
+contract, and systemic gaps instead of patching forward. This "step back"
+intake is the core difference from a naive review loop.
 
-## Planning Methodology
+**Findings carry evidence, not vibes.** Code-review sub-reviewers return
+findings against a shared schema (`P0`–`P3` severity, discrete confidence
+anchors `0/25/50/75/100`, a quote-the-line gate for high-confidence claims).
+Low-confidence findings are dropped at merge unless they are critical.
+Reviewers run under a fresh-review evidence boundary: no project memory, no
+prior sessions, no rollout history — only the plan, the diff, and the repo.
 
-`/cvg-plan` reads the issue scope and the codebase before writing a plan. It
-does not infer product intent from scratch; the accepted goal, acceptance
-criteria, and non-goals are the planning authority.
+**Exit requires a fresh reviewer.** A same-reviewer pass is never the exit
+condition. After repairs, the original reviewer does a focused re-review; the
+loop exits only when a *newly spawned* reviewer with no prior review context
+completes a full first pass with no blockers. "Ready with fixes" (only
+non-blocking P2 notes remain) counts as passing — the loop does not churn on
+nitpicks.
 
-Planning starts with complexity classification:
+**The loop is capped.** Three review rounds without a clean fresh pass stops
+the loop and escalates to the human with all open findings. Findings already
+adjudicated invalid cannot re-block a later round without new evidence (the
+adjudication ratchet). "Bounded convergence" is a rule, not a hope.
 
-| Complexity | Signals | Plan shape |
-| --- | --- | --- |
-| Simple | 1-3 files, one module, clear existing pattern | Brief plan: goal, approach, files, done-when criteria |
-| Medium | 3-10 files, multiple modules, some design decisions | Standard plan: goal, approach, independently verifiable slices |
-| Cross-cutting | Multiple entry points, stateful lifecycle, invariants across surfaces | Full plan: surfaces, invariants, invariant matrix, slices organized by invariant |
+**Plans are right-sized decision artifacts.** `/cvg-plan` classifies complexity
+first (brief / standard / full) and only cross-cutting work gets the full
+surfaces + invariant-matrix treatment. Plans never contain code or function
+signatures. When open behavior decisions bind multiple slices or surfaces, they
+are recorded in a behavior contract rather than invented downstream.
 
-Full plans are built around surfaces and invariants. If the same behavior must
-hold through HTTP handlers, background jobs, callbacks, CLI paths, or other
-entry points, the plan must list those surfaces and make the invariant matrix
-reviewable. The worker then implements one invariant across all listed surfaces
-before moving to the next slice.
+**A human sits between planning and building.** The plan loop produces a plan;
+the build loop starts only when the user explicitly triggers it.
 
-Plans are decision artifacts, not implementation drafts. They must not contain
-function signatures, pseudo-code, or code blocks. If an implementation detail is
-needed to make the plan understandable, the plan should name the decision and
-the affected files or surfaces, not write the code in advance.
+## Two Ways to Use It
 
-Behavior contracts are part of that planning threshold. `/cvg-plan` does not
-create one merely because the plan could be more detailed. Stage and
-issue-specific risk raise the threshold when implementation or review would
-otherwise require the worker to invent behavior that the accepted goal, plan,
-and codebase do not define. Use or create a contract for stable semantics across
-migration, rollback, deletion, privacy, safety, persistence, external APIs, or
-protocol behavior; for cross-surface invariants that need one shared authority;
-or when plan review or implementation exposes a source-backed or
-decision-required contract gap. Workers stop at contract gaps and call back so
-the planner, user, or project authority can update the plan or contract first.
+**Standalone skills** (any supported host): drive each step yourself.
 
-## Review Feedback
+```text
+/cvg-plan -> /cvg-plan-review -> (fix via /cvg-plan-review-feedback)
+-> /cvg-work -> /cvg-code-review -> (fix via /cvg-code-review-feedback)
+```
 
-`/cvg-plan-review-feedback` and `/cvg-code-review-feedback` exist for one reason:
-review feedback is not an edit list.
+When there is no orchestrator, the skills route blocking questions to you
+directly.
 
-When feedback arrives, the same planner or worker that produced the artifact
-first classifies each blocker. Some findings are local fixes. Others are plan
-gaps, contract gaps, systemic design gaps, stale findings, or missing decisions.
-
-That classification is what keeps the loop bounded. A worker can repair a local
-code bug, but if code review exposes a contract gap, plan gap, or systemic
-design gap, the worker breaks the loop and sends a callback instead of blindly
-patching forward. One missing invariant across eight surfaces should become one
-plan or contract repair, not eight rounds of local patches.
-
-## Orchestrated Loops (Codex and Claude Code)
-
-The base skills work across supported agent hosts. Codex and Claude Code add a
-stronger execution surface because both can spawn, continue, and inspect real
-specialist sessions: Codex threads on Codex, background agents (continued with
-`SendMessage`, resumed from persisted transcripts) on Claude Code. Convergo
-uses that capability to run monitored planner, reviewer, worker, and QA
-specialists with callback transport, platform-native waiting, focused
-re-review, and fresh-reviewer exit gates.
-
-The loop skills are:
-
-- `/cvg-plan-loop`: planner and plan reviewers iterate until a fresh reviewer
-  finds no blocking plan issues.
-- `/cvg-build-loop`: worker and code reviewers iterate until a fresh reviewer
-  finds no blocking implementation issues.
-
-The human sits between those loops. After `/cvg-plan-loop` produces a finished
-plan, the user reviews and questions the plan before implementation starts.
-`/cvg-build-loop` starts only when the user explicitly triggers it. If the plan
-requires integration, staging, end-to-end, deployment, or smoke checks, the
-orchestrator runs those gates after clean code review; real failures can reopen
-the build loop.
-
-## Workflow Summary
+**Orchestrated loops** (Claude Code and Codex): the session becomes an
+orchestrator that spawns and supervises real specialist sessions.
 
 ```text
 discuss goal
--> /cvg-plan-loop
+-> /cvg-plan-loop        planner <-> fresh plan reviewers, until clean
 -> human reviews and questions the plan
--> human triggers /cvg-build-loop
+-> /cvg-build-loop       worker <-> fresh code reviewers, until clean
 -> final fresh code review
 -> required QA gates, if any
 -> done
 ```
 
+The loop skills share one protocol (`cvg-multi-session`) with a per-platform
+transport binding: Codex threads (`create_thread` / `send_message_to_thread` /
+`read_thread`, heartbeat waiting) on Codex; background agents (`Agent` +
+`SendMessage`, resumed from persisted transcripts, task-notification waiting)
+on Claude Code. Specialist identity always comes from the platform tool result,
+never from the specialist's own prose. Generic hosts get the six base skills
+only — they lack specialist-session primitives.
+
 ## Skills
 
-| Skill | Purpose | Best fit |
+| Skill | Purpose | Platforms |
 | --- | --- | --- |
-| `/cvg-plan` | Read an issue and codebase, then write a sliced plan with an invariant matrix when needed | Claude Code, Codex |
-| `/cvg-plan-review` | Review a plan against the actual codebase for missing surfaces, incomplete slices, and wrong invariants | Claude Code, Codex |
-| `/cvg-plan-review-feedback` | Handle cvg-plan-review blockers inside the planner session before revising plan-owned artifacts | Claude Code, Codex |
-| `/cvg-work` | Execute a plan slice by slice with TDD and implementation notes | Claude Code, Codex |
-| `/cvg-code-review` | Review implementation against the plan and contract, separating code bugs from contract gaps | Claude Code, Codex |
-| `/cvg-code-review-feedback` | Handle cvg-code-review blockers inside the worker session before repairing implementation-owned issues | Claude Code, Codex |
-| `/cvg-plan-loop` | Orchestrate the plan -> fresh cvg-plan-review loop across real specialist sessions | Claude Code, Codex |
-| `/cvg-build-loop` | Orchestrate worker -> fresh cvg-code-review -> repair -> final fresh-review across real specialist sessions | Claude Code, Codex |
-| `/cvg-multi-session` | Shared multi-session protocol for specialist handoff, callbacks, waiting, and exit gates | Claude Code, Codex |
+| `/cvg-plan` | Read an issue and codebase, then write a sliced plan with an invariant matrix when needed | Claude Code, Codex, generic |
+| `/cvg-plan-review` | Review a plan against the actual codebase for missing surfaces, incomplete slices, and wrong invariants | Claude Code, Codex, generic |
+| `/cvg-plan-review-feedback` | Classify and handle plan-review blockers inside the planner session | Claude Code, Codex, generic |
+| `/cvg-work` | Execute a plan slice by slice with TDD and implementation notes | Claude Code, Codex, generic |
+| `/cvg-code-review` | Review implementation against the plan and contract, separating code bugs from contract gaps | Claude Code, Codex, generic |
+| `/cvg-code-review-feedback` | Classify and handle code-review blockers inside the worker session | Claude Code, Codex, generic |
+| `/cvg-plan-loop` | Orchestrate planner -> fresh plan review -> repair -> final fresh review | Claude Code, Codex |
+| `/cvg-build-loop` | Orchestrate worker -> fresh code review -> repair -> final fresh review -> QA gates | Claude Code, Codex |
+| `/cvg-multi-session` | Shared multi-session protocol: transport binding, callbacks, waiting, feedback routing, exit gates | Claude Code, Codex |
 
 ## Auxiliary Agents
 
-The planning and review skills also vendor a small auxiliary
-reviewer/researcher set adapted from Compound Engineering. Plan-review personas
-live as skill-local prompt assets under
-`cvg-plan-review/references/personas/`, so they do not depend on platform-level
-custom-agent registration. Planning research and code-review personas are still
-packaged as `cvg-*` agents for Claude Code and Codex.
+`/cvg-plan` and `/cvg-code-review` fan out to a small reviewer/researcher set
+adapted from CE. Code-review agents return raw JSON against the shared findings
+schema (`cvg-code-review/references/findings-schema.md`). Plan-review personas
+are skill-local prompt assets under `cvg-plan-review/references/personas/` and
+need no platform agent registration.
 
-| Agent | Used by |
-| --- | --- |
-| `cvg-best-practices-researcher` | `/cvg-plan` |
-| `cvg-repo-research-analyst` | `/cvg-plan` |
-| `cvg-correctness-reviewer` | `/cvg-code-review` |
-| `cvg-testing-reviewer` | `/cvg-code-review` |
-| `cvg-security-reviewer` | `/cvg-code-review` |
-| `cvg-adversarial-reviewer` | `/cvg-code-review` |
-| `cvg-reliability-reviewer` | `/cvg-code-review` |
+| Agent | Used by | When |
+| --- | --- | --- |
+| `cvg-best-practices-researcher` | `/cvg-plan` | non-obvious design work |
+| `cvg-repo-research-analyst` | `/cvg-plan` | always |
+| `cvg-correctness-reviewer` | `/cvg-code-review` | always |
+| `cvg-testing-reviewer` | `/cvg-code-review` | always |
+| `cvg-security-reviewer` | `/cvg-code-review` | auth, input, permissions, data handling |
+| `cvg-adversarial-reviewer` | `/cvg-code-review` | large or high-risk diffs |
+| `cvg-reliability-reviewer` | `/cvg-code-review` | error handling, retries, timeouts, jobs |
+
+## Working Artifacts
+
+Convergo leaves a reviewable paper trail:
+
+- `docs/plans/<issue-id>-plan.md` — the plan; `<issue-id>-contract.md` beside
+  it when a behavior contract is warranted
+- `docs/impl-notes/<issue-id>.md` — worker decisions, deviations, and flagged
+  assumptions the reviewer needs
+- `/tmp/convergo/cvg-code-review/<run-id>/` and
+  `/tmp/convergo/cvg-plan-review/<run-id>/` — per-run audit artifacts:
+  `review.json` (verdict, merged findings, auxiliary coverage) plus one JSON
+  per sub-reviewer
+
+## Does It Fit Your Case?
+
+Convergo is optimized for work where correctness, testability, and
+reviewability matter more than iteration speed: a TDD-oriented workflow for
+code changes with explicit acceptance criteria. It is deliberately heavier than
+a prototype workflow — for quick spikes, throwaway experiments, or rapid visual
+UI iteration, use the base planning and review skills selectively or skip it.
 
 ## Install
-
 
 ### Claude Code
 
@@ -186,7 +165,8 @@ packaged as `cvg-*` agents for Claude Code and Codex.
 /plugin install convergo
 ```
 
-The Claude plugin exposes only the six base skills: `/cvg-plan`, `/cvg-plan-review`, `/cvg-plan-review-feedback`, `/cvg-work`, `/cvg-code-review`, and `/cvg-code-review-feedback`.
+The Claude plugin ships all nine skills (base + orchestrated loops) and the
+auxiliary `cvg-*` agents.
 
 ### Codex App
 
@@ -273,11 +253,20 @@ gemini extensions install https://github.com/gomilesf/convergo
 
 ```bash
 bun install
-bun run sync
-bun run validate
-bun test
+bun run sync       # regenerate plugins/*/skills from skills-src/
+bun run validate   # productization metadata checks
+bun test           # metadata + skill convention tests
 bun run plugin:validate
 ```
+
+Static tests guard the contracts that keep the loop sound: the multi-session
+protocol gates stay byte-identical across all vendored copies, the findings
+schema ships with every `cvg-code-review` copy, the stage-calibration block
+stays in sync across skills, and agent prompts contain no dangling references.
+Before releases that touch the loop skills, run the manual end-to-end gate:
+[docs/loop-smoke-test.md](docs/loop-smoke-test.md), a seeded-bug micro
+build-loop that exercises spawn, fresh review, feedback-to-same-worker,
+focused re-review, and the final fresh exit on the Claude Code transport.
 
 ### Load This Checkout Directly
 
@@ -328,8 +317,8 @@ plugin. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 ```text
 skills-src/        Canonical skill sources
 agents-src/        Canonical auxiliary agent sources
-plugins/codex/     Codex plugin root with all nine skills and Codex agents
-plugins/claude/    Claude Code plugin root with six base skills and Claude agents
+plugins/codex/     Codex plugin root: all nine skills + Codex agents
+plugins/claude/    Claude Code plugin root: all nine skills + Claude agents
 plugins/generic/   Base-only skill root for generic hosts
 .claude-plugin/    Claude Code marketplace metadata
 .agents/plugins/   Codex custom marketplace descriptor
@@ -339,5 +328,5 @@ plugins/generic/   Base-only skill root for generic hosts
 src/               Productization validation library
 scripts/           Sync and validation text interfaces
 tests/             Metadata and skill convention tests
-docs/              Productization notes
+docs/              Productization notes and the loop smoke-test runbook
 ```
