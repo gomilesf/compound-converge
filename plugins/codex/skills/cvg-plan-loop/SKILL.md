@@ -1,18 +1,19 @@
 ---
 name: cvg-plan-loop
-description: Orchestrate a monitored Codex planning loop with a planner, fresh plan reviewers, focused re-review, callback transport, heartbeat waiting, and strict fresh-reviewer exit gates. Use when the user asks to create or revise a plan through Codex sessions.
+description: Orchestrate a monitored planning loop with a planner, fresh plan reviewers, focused re-review, callback transport, and strict fresh-reviewer exit gates. Runs on Codex threads or Claude Code background agents. Use when the user asks to create or revise a plan through supervised specialist sessions.
 argument-hint: "[planning goal, requirements path, behavior contract path, or planning prompt]"
 ---
 
-# Codex Plan Loop
+# Plan Loop
 
 Use this skill for plan-only cvg-multi-session orchestration.
 
 Before doing anything, open and read `references/cvg-multi-session-protocol.md`, then apply the protocol gates from `cvg-multi-session`:
 
-- real Codex thread gate,
+- transport binding gate,
+- real specialist session gate,
 - orchestrator callback transport gate,
-- heartbeat handoff gate,
+- waiting handoff gate,
 - cvg-plan-review-feedback gate,
 - fresh-reviewer exit gate.
 
@@ -22,7 +23,7 @@ Do not implement product code in this workflow.
 
 Record:
 
-- current orchestrator thread id,
+- current orchestrator session id (Codex thread id; on Claude Code the harness tracks it),
 - worktree or repo path,
 - current `git rev-parse HEAD` if available,
 - dirty worktree state,
@@ -37,16 +38,15 @@ Classify dirty files:
 
 ## Phase 1: Planner Handoff
 
-Create the planner as a real Codex thread with `create_thread`.
-
-Immediately verify the returned planner thread id with `read_thread`. If it is
-not readable, do not continue. After verification, send the planner its verified
-thread id before creating the heartbeat.
+Spawn the planner as a real specialist session (Gate 0 spawn operation) and
+record the id returned by the tool. Verify it per Gate 1; if it is not
+verifiable, do not continue. (Codex) After verification, send the planner its
+verified thread id before creating the heartbeat.
 
 Planner prompt must include:
 
 - role: planner,
-- destination orchestrator Codex thread id,
+- callback destination per Gate 2,
 - required planning skill, such as `cvg-plan` or another user-specified plan skill,
 - source prompt, requirements path, or exact user goal,
 - repo path and starting state,
@@ -63,22 +63,21 @@ files, or local policy summaries unless they are the user's source authority.
 Planner callback template:
 
 ```text
-I am the planner. My session/thread id is <planner-thread-id>. Orchestrator thread id: <orchestrator-id>. This planning round is complete. Plan path: <absolute path>. Key status: <brief>. Please decide the next step.
+I am the planner. My specialist id is <planner-id>. This planning round is complete. Plan path: <absolute path>. Key status: <brief>. Please decide the next step.
 ```
 
-After verifying the planner thread, create or update a heartbeat and end the active turn. Do not use `sleep` or repeated `read_thread` to wait.
+Complete the waiting handoff per Gate 3 and end the active turn. Do not use `sleep` or repeated reads to wait.
 
 ## Phase 2: Fresh Plan Review
 
-After planner callback is visible in the orchestrator thread, create a new fresh reviewer Codex thread.
-
-Immediately verify the reviewer thread id with `read_thread`.
+After the planner callback is visible, spawn a new fresh reviewer specialist
+session and verify its id per Gate 1.
 
 Reviewer prompt must include:
 
 - role: fresh plan reviewer,
 - the line `Do not consult project memory, prior sessions, rollout summaries, or external history.` before the required skill line,
-- destination orchestrator Codex thread id,
+- callback destination per Gate 2,
 - required cvg-plan-review skill, such as `cvg-plan-review`,
 - original planning goal or source prompt,
 - plan path,
@@ -95,13 +94,10 @@ links its authorities and the reviewer can read the worktree.
 Reviewer callback template:
 
 ```text
-I am the fresh reviewer. My session/thread id is <reviewer-thread-id>. Orchestrator thread id: <orchestrator-id>. This first-pass full review is complete. Verdict: <clean / blocking findings>. Findings: <none or numbered concise list>. Please decide the next step.
+I am the fresh reviewer. My specialist id is <reviewer-id>. This first-pass full review is complete. Verdict: <clean / blocking findings>. Findings: <none or numbered concise list>. Please decide the next step.
 ```
 
-After verifying the reviewer thread with `read_thread`, send the reviewer its
-verified thread id before creating the heartbeat.
-
-Create or update a heartbeat and end the active turn while waiting. Do not manually poll.
+Complete the waiting handoff per Gate 3 and end the active turn while waiting. Do not manually poll.
 
 Blocking plan findings include:
 
@@ -116,14 +112,14 @@ Blocking plan findings include:
 
 ## Phase 3: Return Review Feedback to Planner
 
-If the reviewer reports blockers, send the reviewer feedback to the same verified planner thread with `send_message_to_thread`.
+If the reviewer reports blockers, send the reviewer feedback to the same verified planner session with the continue operation (Gate 0).
 
 Do not classify findings, choose revision strategy, filter reviewer output, or turn the review into an edit list in the orchestrator.
 
 The feedback prompt must include:
 
-- destination orchestrator Codex thread id,
-- reviewer thread id,
+- callback destination per Gate 2,
+- reviewer specialist id,
 - required feedback skill: `cvg-plan-review-feedback`,
 - original planning goal and source prompt,
 - current plan path and related contracts,
@@ -134,11 +130,11 @@ The feedback prompt must include:
 
 Do not restate the feedback skill's intake, classification, or revision rules.
 
-Create or update a heartbeat and end the active turn.
+Complete the waiting handoff per Gate 3 and end the active turn.
 
 ## Phase 4: Focused Re-Review
 
-After planner feedback callback is visible in the orchestrator thread and a reviewable plan revision exists, send a focused re-review request to the same verified reviewer thread with `send_message_to_thread`.
+After the planner feedback callback is visible and a reviewable plan revision exists, send a focused re-review request to the same verified reviewer session with the continue operation.
 
 Focused scope:
 
@@ -146,7 +142,7 @@ Focused scope:
 - check directly related contradictions introduced by the revision,
 - do not redo broad review unless the plan's core design changed.
 
-Create or update a heartbeat and end the active turn.
+Complete the waiting handoff per Gate 3 and end the active turn.
 
 If the planner reports a contract decision, escalation, or clarification need, route that callback to the appropriate reviewer or user decision before requesting re-review.
 
@@ -156,11 +152,12 @@ If same reviewer passes, do not exit. Continue to Phase 5.
 
 ## Phase 5: Final Fresh Review
 
-Create a new fresh reviewer Codex thread for a complete first review of the revised plan. Verify it with `read_thread`.
+Spawn a new fresh reviewer specialist session for a complete first review of the revised plan. Verify its id per Gate 1.
 
 Use the same minimal reviewer prompt shape from Phase 2. The new fresh reviewer
-must send its callback to the orchestrator with `send_message_to_thread`; do
-not ask it to leave the callback only in its own thread.
+must deliver its callback to the orchestrator per Gate 2; do not accept a
+result left only inside the specialist session when the platform requires an
+explicit callback send.
 
 Final exit condition:
 
@@ -181,10 +178,10 @@ adjudicated invalid or out of scope cannot re-block without new evidence.
 Report:
 
 - plan path,
-- planner thread id,
-- reviewer thread ids,
+- planner specialist id,
+- reviewer specialist ids,
 - callback transport status,
 - blockers and planner `cvg-plan-review-feedback` results,
 - final fresh reviewer verdict,
-- heartbeat cleanup,
+- heartbeat cleanup (Codex),
 - known gaps.

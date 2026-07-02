@@ -1,18 +1,19 @@
 ---
 name: cvg-build-loop
-description: Orchestrate a monitored Codex implementation loop with a worker, code reviewers, actor-local review feedback handling, QA gates, callback transport, heartbeat waiting, and strict fresh-reviewer exit conditions.
+description: Orchestrate a monitored implementation loop with a worker, code reviewers, actor-local review feedback handling, QA gates, callback transport, and strict fresh-reviewer exit conditions. Runs on Codex threads or Claude Code background agents.
 argument-hint: "[plan path, base commit, or implementation goal]"
 ---
 
-# Codex Build Loop
+# Build Loop
 
-Use this skill for implementation work that should be executed by a monitored Codex worker and reviewed by monitored Codex reviewers.
+Use this skill for implementation work that should be executed by a monitored specialist worker and reviewed by monitored specialist reviewers.
 
 Before doing anything, open and read `references/cvg-multi-session-protocol.md`, then apply the protocol gates from `cvg-multi-session`:
 
-- real Codex thread gate,
+- transport binding gate,
+- real specialist session gate,
 - orchestrator callback transport gate,
-- heartbeat handoff gate,
+- waiting handoff gate,
 - cvg-code-review-feedback gate,
 - fresh-reviewer exit gate.
 
@@ -20,7 +21,7 @@ Before doing anything, open and read `references/cvg-multi-session-protocol.md`,
 
 Record:
 
-- current orchestrator thread id,
+- current orchestrator session id (Codex thread id; on Claude Code the harness tracks it),
 - implementation base commit with `git rev-parse HEAD`,
 - worktree status,
 - task-owned and unrelated dirty files,
@@ -31,14 +32,14 @@ Pass unrelated dirty state to the worker and tell it not to overwrite those file
 
 ## Phase 1: Worker Handoff
 
-Create the worker as a real Codex thread with `create_thread`.
-
-Immediately verify the returned worker thread id with `read_thread`. If it is not readable, do not continue.
+Spawn the worker as a real specialist session (Gate 0 spawn operation) and
+record the id returned by the tool. Verify it per Gate 1; if it is not
+verifiable, do not continue.
 
 Worker prompt must include:
 
 - role: implementation worker,
-- destination orchestrator Codex thread id,
+- callback destination per Gate 2,
 - required work skill, such as `cvg-work` or another user-specified implementation skill,
 - base commit,
 - worktree path,
@@ -54,32 +55,32 @@ likely files, broad surface checklists, previous reviewer risk hints, old
 commits, or repo policy summaries unless the user supplied them as task
 authority and they are not linked from the plan.
 
-After verifying the worker thread with `read_thread`, send the worker its
-verified thread id before creating the heartbeat.
+(Codex) After verifying the worker thread with `read_thread`, send the worker
+its verified thread id before creating the heartbeat.
 
 Worker completion callback template:
 
 ```text
-I am the worker. My session/thread id is <worker-thread-id>. Orchestrator thread id: <orchestrator-id>. This implementation round is complete. Base commit: <base>. Head commit: <head>. Key changes: <brief>. Verification: <commands/results>. Known gaps: <none or list>. Please arrange a fresh code reviewer.
+I am the worker. My specialist id is <worker-id>. This implementation round is complete. Base commit: <base>. Head commit: <head>. Key changes: <brief>. Verification: <commands/results>. Known gaps: <none or list>. Please arrange a fresh code reviewer.
 ```
 
 Worker blocker callback template:
 
 ```text
-I am the worker. My session/thread id is <worker-thread-id>. Orchestrator thread id: <orchestrator-id>. I found a blocking contract gap. Gap: <id/summary>. Evidence: <files/tests>. Recommendation: <repair/escalation>. Please decide the next step.
+I am the worker. My specialist id is <worker-id>. I found a blocking contract gap. Gap: <id/summary>. Evidence: <files/tests>. Recommendation: <repair/escalation>. Please decide the next step.
 ```
 
-After verifying the worker thread, create or update a heartbeat and end the active turn. Do not use `sleep` or repeated `read_thread` to wait.
+Complete the waiting handoff per Gate 3 and end the active turn. Do not use `sleep` or repeated reads to wait.
 
 ## Phase 2: Fresh Code Review
 
-After worker callback is visible in the orchestrator thread, create a fresh reviewer Codex thread. Verify it with `read_thread`.
+After the worker callback is visible, spawn a fresh reviewer specialist session. Verify it per Gate 1.
 
 Reviewer prompt must include:
 
 - role: fresh code reviewer,
 - the line `Do not consult project memory, prior sessions, rollout summaries, or external history.` before the required skill line,
-- destination orchestrator Codex thread id,
+- callback destination per Gate 2,
 - required cvg-code-review skill, such as `cvg-code-review`,
 - review mode when this reviewer is the final exit gate,
 - base commit and head commit,
@@ -102,13 +103,13 @@ stating the review must be independent.
 Reviewer callback template:
 
 ```text
-I am the fresh code reviewer. My session/thread id is <reviewer-thread-id>. Orchestrator thread id: <orchestrator-id>. This first-pass full code review is complete. Verdict: <ready to merge / ready with fixes / not ready>. Findings: <none or numbered blocker list>. Non-blocking P2 notes: <none or brief list>. Please decide the next step.
+I am the fresh code reviewer. My specialist id is <reviewer-id>. This first-pass full code review is complete. Verdict: <ready to merge / ready with fixes / not ready>. Findings: <none or numbered blocker list>. Non-blocking P2 notes: <none or brief list>. Please decide the next step.
 ```
 
-After verifying the reviewer thread with `read_thread`, send the reviewer its
-verified thread id before creating the heartbeat.
+(Codex) After verifying the reviewer thread with `read_thread`, send the
+reviewer its verified thread id before creating the heartbeat.
 
-Create or update a heartbeat and end the active turn while waiting. Do not manually poll.
+Complete the waiting handoff per Gate 3 and end the active turn while waiting. Do not manually poll.
 
 Reviewer should report blocking findings only:
 
@@ -124,14 +125,14 @@ Non-blocking quality notes belong in a separate quality review unless the orches
 
 ## Phase 3: Return Review Feedback to Worker
 
-After reviewer callback is visible in the orchestrator thread, send the reviewer feedback to the same verified worker thread with `send_message_to_thread`.
+After the reviewer callback is visible, send the reviewer feedback to the same verified worker session with the continue operation (Gate 0).
 
 Do not classify findings, choose repair strategy, filter reviewer output, or turn the review into a patch list in the orchestrator.
 
 Feedback prompt must include:
 
-- destination orchestrator Codex thread id,
-- reviewer thread id,
+- callback destination per Gate 2,
+- reviewer specialist id,
 - required feedback skill: `cvg-code-review-feedback`,
 - plan path, implementation notes path when present, base commit, review head,
   and current head,
@@ -147,16 +148,16 @@ are the worker's authority.
 Worker feedback callback template:
 
 ```text
-I am the worker. My session/thread id is <worker-thread-id>. Orchestrator thread id: <orchestrator-id>. Code review feedback handling is complete. Base commit: <base>. Previous review head: <old>. New head commit: <new>. Code-review-feedback result: <repaired / plan gap / contract gap / systemic design gap / escalation / clarification needed>. Fixed findings: <brief or none>. Verification: <commands/results>. Known gaps: <none or list>. Please arrange the next review step.
+I am the worker. My specialist id is <worker-id>. Code review feedback handling is complete. Base commit: <base>. Previous review head: <old>. New head commit: <new>. Code-review-feedback result: <repaired / plan gap / contract gap / systemic design gap / escalation / clarification needed>. Fixed findings: <brief or none>. Verification: <commands/results>. Known gaps: <none or list>. Please arrange the next review step.
 ```
 
-Create or update a heartbeat and end the active turn.
+Complete the waiting handoff per Gate 3 and end the active turn.
 
 If the worker reports a plan or contract gap, escalation, or clarification need, route that callback to the appropriate planner, reviewer, or user decision before requesting re-review.
 
 ## Phase 4: Same Reviewer Focused Re-Review
 
-After worker feedback callback is visible in the orchestrator thread and a reviewable implementation repair exists, send focused re-review to the same verified reviewer thread with `send_message_to_thread`.
+After the worker feedback callback is visible and a reviewable implementation repair exists, send focused re-review to the same verified reviewer session with the continue operation.
 
 If the worker reported a plan gap, contract gap, systemic design gap, escalation, or clarification need, do not request code re-review yet. Route that blocker to the planner, reviewer, or user decision path first, then return to the worker only after the plan or contract is resolved.
 
@@ -176,18 +177,19 @@ Focused re-review does not require auxiliary reviewers. Do not ask the focused
 reviewer to dispatch auxiliary reviewers or synthesize inline auxiliary
 coverage.
 
-Create or update a heartbeat and end the active turn.
+Complete the waiting handoff per Gate 3 and end the active turn.
 
 Same reviewer pass is not enough to exit.
 
 ## Phase 5: New Fresh Review
 
-After same reviewer passes, create a new fresh code reviewer thread for a complete first review. Verify it with `read_thread`.
+After same reviewer passes, spawn a new fresh code reviewer specialist session for a complete first review. Verify it per Gate 1.
 
 Use the same minimal reviewer prompt shape from Phase 2. The new fresh reviewer
-prompt must include `Review mode: final-fresh-exit`. It must send its callback
-to the orchestrator with `send_message_to_thread`; do not ask it to leave the
-callback only in its own thread. Do not include previous reviewer verdicts, blocker text, focused re-review results, or worker repair summaries; include only independent risk-area labels if needed.
+prompt must include `Review mode: final-fresh-exit`. It must deliver its
+callback to the orchestrator per Gate 2; do not accept a result left only
+inside the specialist session when the platform requires an explicit callback
+send. Do not include previous reviewer verdicts, blocker text, focused re-review results, or worker repair summaries; include only independent risk-area labels if needed.
 
 Final implementation exit condition:
 
@@ -212,7 +214,7 @@ If the plan requires integration, staging, deployment, end-to-end, or smoke chec
 
 QA worker prompt must include:
 
-- destination orchestrator Codex thread id,
+- callback destination per Gate 2,
 - exact versions under test,
 - allowed external side effects,
 - evidence/report path,
@@ -251,7 +253,7 @@ Quality findings are not automatically release blockers. The orchestrator decide
 Report:
 
 - base commit and final head,
-- worker and reviewer thread ids verified with `read_thread`,
+- worker and reviewer specialist ids verified per Gate 1,
 - callback transport status,
 - review findings and worker `cvg-code-review-feedback` results,
 - repair commits,
