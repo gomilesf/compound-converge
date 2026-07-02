@@ -43,8 +43,9 @@ const PLUGIN_NAME = "convergo"
 const CODEX_INSTALL_MANIFEST = "install-manifest.json"
 const EXPECTED_REPOSITORY = "https://github.com/gomilesf/convergo"
 export const BASE_SKILLS = ["cvg-code-review", "cvg-code-review-feedback", "cvg-plan", "cvg-plan-review", "cvg-plan-review-feedback", "cvg-work"].sort()
-export const CODEX_ONLY_SKILLS = ["cvg-build-loop", "cvg-multi-session", "cvg-plan-loop"].sort()
-export const CODEX_SKILLS = [...BASE_SKILLS, ...CODEX_ONLY_SKILLS].sort()
+export const LOOP_SKILLS = ["cvg-build-loop", "cvg-multi-session", "cvg-plan-loop"].sort()
+export const CODEX_SKILLS = [...BASE_SKILLS, ...LOOP_SKILLS].sort()
+export const CLAUDE_SKILLS = [...BASE_SKILLS, ...LOOP_SKILLS].sort()
 export const AUXILIARY_AGENT_NAMES = [
   "cvg-adversarial-reviewer",
   "cvg-best-practices-researcher",
@@ -412,7 +413,7 @@ export async function validateProductization(root = process.cwd()): Promise<Prod
 
   await validateSkillSurface(root, errors, PLATFORM_SKILL_ROOTS.source, CODEX_SKILLS)
   await validateSkillSurface(root, errors, PLATFORM_SKILL_ROOTS.codex, CODEX_SKILLS)
-  await validateSkillSurface(root, errors, PLATFORM_SKILL_ROOTS.claude, BASE_SKILLS)
+  await validateSkillSurface(root, errors, PLATFORM_SKILL_ROOTS.claude, CLAUDE_SKILLS)
   await validateSkillSurface(root, errors, PLATFORM_SKILL_ROOTS.generic, BASE_SKILLS)
   await validateAgentSurface(root, errors, PLATFORM_AGENT_ROOTS.sourceClaude, ".agent.md")
   await validateAgentSurface(root, errors, PLATFORM_AGENT_ROOTS.sourceCodex, ".toml")

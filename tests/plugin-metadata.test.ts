@@ -4,6 +4,7 @@ import path from "node:path"
 import {
   AUXILIARY_AGENT_NAMES,
   BASE_SKILLS,
+  CLAUDE_SKILLS,
   CODEX_SKILLS,
   PLATFORM_AGENT_ROOTS,
   PLATFORM_SKILL_ROOTS,
@@ -167,7 +168,7 @@ describe("plugin metadata", () => {
     expect(statSync(skillsPath).isDirectory()).toBe(true)
     expect(listSkillDirs(PLATFORM_SKILL_ROOTS.source)).toEqual(CODEX_SKILLS)
     expect(listSkillDirs(PLATFORM_SKILL_ROOTS.codex)).toEqual(CODEX_SKILLS)
-    expect(listSkillDirs(PLATFORM_SKILL_ROOTS.claude)).toEqual(BASE_SKILLS)
+    expect(listSkillDirs(PLATFORM_SKILL_ROOTS.claude)).toEqual(CLAUDE_SKILLS)
     expect(listSkillDirs(PLATFORM_SKILL_ROOTS.generic)).toEqual(BASE_SKILLS)
     expect(existsSync(path.join(ROOT, "skills"))).toBe(false)
   })
@@ -183,8 +184,10 @@ describe("plugin metadata", () => {
     for (const skillName of CODEX_SKILLS) {
       expectSkillCopyMatchesSource(skillName, PLATFORM_SKILL_ROOTS.codex)
     }
-    for (const skillName of BASE_SKILLS) {
+    for (const skillName of CLAUDE_SKILLS) {
       expectSkillCopyMatchesSource(skillName, PLATFORM_SKILL_ROOTS.claude)
+    }
+    for (const skillName of BASE_SKILLS) {
       expectSkillCopyMatchesSource(skillName, PLATFORM_SKILL_ROOTS.generic)
     }
   })

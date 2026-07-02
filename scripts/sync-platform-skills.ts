@@ -4,8 +4,9 @@ import path from "node:path"
 const ROOT = process.cwd()
 
 const BASE_SKILLS = ["cvg-plan", "cvg-plan-review", "cvg-plan-review-feedback", "cvg-work", "cvg-code-review", "cvg-code-review-feedback"].sort()
-const CODEX_ONLY_SKILLS = ["cvg-plan-loop", "cvg-build-loop", "cvg-multi-session"].sort()
-const CODEX_SKILLS = [...BASE_SKILLS, ...CODEX_ONLY_SKILLS].sort()
+const LOOP_SKILLS = ["cvg-plan-loop", "cvg-build-loop", "cvg-multi-session"].sort()
+const CODEX_SKILLS = [...BASE_SKILLS, ...LOOP_SKILLS].sort()
+const CLAUDE_SKILLS = [...BASE_SKILLS, ...LOOP_SKILLS].sort()
 const AUXILIARY_AGENT_NAMES = [
   "cvg-adversarial-reviewer",
   "cvg-best-practices-researcher",
@@ -24,7 +25,7 @@ const PLATFORMS = [
   },
   {
     name: "claude",
-    skills: BASE_SKILLS,
+    skills: CLAUDE_SKILLS,
     target: "plugins/claude/skills",
   },
   {

@@ -22,8 +22,8 @@ failures.
 Convergo keeps the useful CE discipline and adds convergence rules:
 right-sized plans, behavior-contract thresholds for high-risk or missing
 behavior decisions, role-specific review feedback handling, fresh-reviewer exit
-gates, and Codex-only planner-reviewer and worker-reviewer loops with a human
-decision point between planning and implementation.
+gates, and orchestrated planner-reviewer and worker-reviewer loops (Codex and
+Claude Code) with a human decision point between planning and implementation.
 
 ## Why Convergo Exists
 
@@ -107,15 +107,17 @@ design gap, the worker breaks the loop and sends a callback instead of blindly
 patching forward. One missing invariant across eight surfaces should become one
 plan or contract repair, not eight rounds of local patches.
 
-## Bonus for Codex
+## Orchestrated Loops (Codex and Claude Code)
 
-The base skills work across supported agent hosts. Codex adds a stronger
-execution surface because it can create, continue, and inspect real Codex
-threads. Convergo uses that capability to run monitored planner,
-reviewer, worker, and QA threads with callback transport, heartbeat waiting,
-focused re-review, and fresh-reviewer exit gates.
+The base skills work across supported agent hosts. Codex and Claude Code add a
+stronger execution surface because both can spawn, continue, and inspect real
+specialist sessions: Codex threads on Codex, background agents (continued with
+`SendMessage`, resumed from persisted transcripts) on Claude Code. Convergo
+uses that capability to run monitored planner, reviewer, worker, and QA
+specialists with callback transport, platform-native waiting, focused
+re-review, and fresh-reviewer exit gates.
 
-The Codex-only loop skills are:
+The loop skills are:
 
 - `/cvg-plan-loop`: planner and plan reviewers iterate until a fresh reviewer
   finds no blocking plan issues.
@@ -125,9 +127,9 @@ The Codex-only loop skills are:
 The human sits between those loops. After `/cvg-plan-loop` produces a finished
 plan, the user reviews and questions the plan before implementation starts.
 `/cvg-build-loop` starts only when the user explicitly triggers it. If the plan
-requires integration, staging, end-to-end, deployment, or smoke checks, Codex
-runs those gates after clean code review; real failures can reopen the build
-loop.
+requires integration, staging, end-to-end, deployment, or smoke checks, the
+orchestrator runs those gates after clean code review; real failures can reopen
+the build loop.
 
 ## Workflow Summary
 
@@ -151,9 +153,9 @@ discuss goal
 | `/cvg-work` | Execute a plan slice by slice with TDD and implementation notes | Claude Code, Codex |
 | `/cvg-code-review` | Review implementation against the plan and contract, separating code bugs from contract gaps | Claude Code, Codex |
 | `/cvg-code-review-feedback` | Handle cvg-code-review blockers inside the worker session before repairing implementation-owned issues | Claude Code, Codex |
-| `/cvg-plan-loop` | Orchestrate the plan -> fresh cvg-plan-review loop across real Codex threads | Codex |
-| `/cvg-build-loop` | Orchestrate worker -> fresh cvg-code-review -> repair -> final fresh-review across real Codex threads | Codex |
-| `/cvg-multi-session` | Shared Codex multi-thread protocol for specialist handoff, callbacks, heartbeat waiting, and exit gates | Codex |
+| `/cvg-plan-loop` | Orchestrate the plan -> fresh cvg-plan-review loop across real specialist sessions | Claude Code, Codex |
+| `/cvg-build-loop` | Orchestrate worker -> fresh cvg-code-review -> repair -> final fresh-review across real specialist sessions | Claude Code, Codex |
+| `/cvg-multi-session` | Shared multi-session protocol for specialist handoff, callbacks, waiting, and exit gates | Claude Code, Codex |
 
 ## Auxiliary Agents
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 import {
   AUXILIARY_AGENT_NAMES,
-  BASE_SKILLS,
+  CLAUDE_SKILLS,
   CODEX_SKILLS,
   PLATFORM_AGENT_ROOTS,
   PLATFORM_SKILL_ROOTS,
@@ -36,7 +36,7 @@ console.log(
     "Productization metadata is valid.",
     `source=${sourceSkills.length}/${CODEX_SKILLS.length}`,
     `codex=${codexSkills.length}/${CODEX_SKILLS.length}`,
-    `claude=${claudeSkills.length}/${BASE_SKILLS.length}`,
+    `claude=${claudeSkills.length}/${CLAUDE_SKILLS.length}`,
     `codexAgents=${codexAgents.length}/${AUXILIARY_AGENT_NAMES.length}`,
     `claudeAgents=${claudeAgents.length}/${AUXILIARY_AGENT_NAMES.length}`,
   ].join(" "),
