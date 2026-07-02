@@ -13,6 +13,10 @@ do, how to do it, and how to know it is done.
 The task context provides the issue goal, acceptance criteria, and non-goals.
 Use these as the primary input. Do not re-derive product intent.
 
+If the task context provides no issue id, derive one as `<yyyy-mm-dd>-<short-slug>`
+from the issue title. If it provides no coordination channel (standalone use),
+the coordination channel is the user: ask directly.
+
 ## Stage Calibration
 
 Read project stage guidance from the task context before applying this skill.
@@ -187,6 +191,16 @@ across all surfaces.
 Ensure the plan document exists, any needed behavior contract exists, and both
 are coherent enough for a worker to start without inventing missing behavior.
 
+**Behavior contract.** A behavior contract records behavior decisions the issue
+text and plan structure do not capture: input/output shapes, error behavior,
+edge-case semantics, and compatibility promises. Create one at
+`docs/plans/<issue-id>-contract.md` only when open behavior decisions bind more
+than one slice or surface; otherwise record the decisions inline in the plan's
+Approach section. Each contract entry states the decision, its source (issue
+text, user answer, or existing behavior), and the surfaces it binds. "Contract
+gap" findings elsewhere in this workflow refer to decisions missing from this
+artifact or the plan.
+
 ## When you receive plan review feedback
 
 Before editing the plan, run the `cvg-plan-review-feedback` skill. The input is the
@@ -215,10 +229,6 @@ result.
 - **Invariants are contracts, not suggestions.** Each invariant in the matrix is
   something the reviewer will verify on every surface. If it is in the matrix,
   it must hold.
-- **Do not plan against unsupported workflow templates.** `feature-development`
-  is the only active workflow template. Future workflow-template ideas must stay
-  non-implemented and out of scope unless the task explicitly asks for that
-  design.
 - **State what you do not know.** If a design decision depends on something you
   cannot determine from code reading, say so explicitly. Do not guess.
 - **Questions that block progress:** capture the question clearly and route it

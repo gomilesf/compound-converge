@@ -16,6 +16,9 @@ Do not treat reviewer findings as an edit list. First decide whether each findin
 is valid under the accepted goal and current code reality, then revise only
 plan-owned artifacts.
 
+If the task context provides no coordination channel (standalone use), the
+coordination channel is the user: stop and ask directly.
+
 ## Process
 
 ### 1. Reload planning authority

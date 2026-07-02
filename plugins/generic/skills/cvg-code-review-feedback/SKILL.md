@@ -16,6 +16,9 @@ Do not treat reviewer findings as a patch list. First decide whether each findin
 is an implementation-owned issue under the accepted plan and contract. Workers
 must stop for plan gaps, contract gaps, and systemic design gaps.
 
+If the task context provides no coordination channel (standalone use), the
+coordination channel is the user: stop and ask directly.
+
 ## Process
 
 ### 1. Reload implementation authority

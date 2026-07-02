@@ -13,6 +13,9 @@ implementation complete until the plan's "done when" criteria are all met.
 The task context provides the plan path. Read the plan document and any linked
 behavior contract.
 
+If the task context provides no coordination channel (standalone use), the
+coordination channel is the user: stop and ask directly.
+
 ## Stage Calibration
 
 Read project stage guidance from the task context before applying this skill.
@@ -181,10 +184,6 @@ contract before implementation continues.
 - **TDD is not optional.** If you cannot write a test for a slice's "done when,"
   capture the blocker and route it through the task context.
 - **Do not refactor beyond the plan.** Stay within the plan's scope boundaries.
-- **Do not revive unsupported workflow templates.** `feature-development` is
-  the only active workflow template. Unsupported template ids and removed
-  approval commands are not current workarounds; if a plan requires them,
-  capture a contract gap.
 - **Commit per slice.** One atomic commit per slice.
 - **The invariant matrix is your checklist.** Every cell must be checked before
   you declare the implementation complete. Missing one cell is the main cause
