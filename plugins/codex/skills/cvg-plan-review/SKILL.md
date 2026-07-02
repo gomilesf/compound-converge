@@ -37,7 +37,8 @@ Read project stage guidance from the task context before applying this skill.
 For plan review, stage affects over-design judgment and migration or
 backward-compatibility expectations; real surface completeness remains
 mandatory. Stage can lower the default resilience bar for MVP work, but it
-cannot excuse a plan that misses the actual entry point, acceptance criteria.
+cannot excuse a plan that misses a real entry point or lacks verifiable
+acceptance criteria.
 
 ## Process
 
@@ -50,7 +51,7 @@ each slice.
 Create a per-review audit directory:
 
 ```bash
-RUN_ID=$(date +%Y%m%d-%H%M%S)-$(head -c4 /dev/urandom | od -An -tx1 | tr -d ' ')
+RUN_ID=$(date +%Y%m%d-%H%M%S)-$RANDOM
 mkdir -p "/tmp/convergo/cvg-plan-review/$RUN_ID"
 ```
 
@@ -119,24 +120,22 @@ For each selected reviewer:
    serially.
 
 Immediately after each generic subagent dispatch, initialize an auxiliary
-coverage record for that persona. Preserve the platform identity returned by
-the dispatch tool. If the platform exposes only one child identifier, record
-the same value in `agent_id` and `thread_id`. If the child identifier is exposed
-only in a later completion notification, update the coverage record before
-writing `review.json`. If delegation is unavailable, keep the persona in the
-coverage object with `inline` or `skipped` status and null identity fields.
+coverage record for that persona. Record the platform child identifier
+returned by the dispatch tool (spawn id, session id, or thread id) in
+`agent_id`. If the identifier is exposed only in a later completion
+notification, update the coverage record before writing `review.json`. If
+delegation is unavailable, keep the persona in the coverage object with
+`inline` or `skipped` status and a null `agent_id`.
 
-Auxiliary coverage must be an object keyed by reviewer name:
+Auxiliary coverage must be an object keyed by reviewer name. Each persona's
+artifact lives at `<run-dir>/<reviewer-name>.json`; do not repeat the path in
+the record.
 
 ```json
 {
   "feasibility-reviewer": {
     "status": "dispatched | inline | skipped | failed",
-    "persona": "feasibility-reviewer",
-    "agent_role": "generic-subagent",
-    "agent_id": "<subagent id, child session id, or null>",
-    "thread_id": "<child thread/session id when exposed, or null>",
-    "artifact_path": "/tmp/convergo/cvg-plan-review/<run-id>/<reviewer-name>.json",
+    "agent_id": "<platform child id: spawn, session, or thread id, or null>",
     "artifact_written": true
   }
 }
@@ -177,6 +176,13 @@ Ask each persona reviewer to return:
 }
 ```
 
+Severity for plan findings: **P0** = the plan as written leads to broken or
+unsafe implementation (missing surface, wrong invariant, infeasible approach).
+**P1** = the worker would have to invent a significant missing decision
+(missing slice, unverifiable criterion, missing dependency). **P2** = plan
+quality issue that will not block a correct implementation. P0 and P1 block;
+P2 does not.
+
 The persona must write that same JSON object to
 `/tmp/convergo/cvg-plan-review/<run-id>/<reviewer-name>.json` before
 returning it. The returned response must be one raw JSON object only: no
@@ -201,11 +207,8 @@ Use `skipped` for unselected reviewers and for all three reviewers on brief
 plans. If a selected reviewer ran inline because generic subagents were
 unavailable, use `inline`.
 
-Before responding, write:
-
-- `/tmp/convergo/cvg-plan-review/<run-id>/review.json` with the merged
-  findings, object-form `auxiliary_coverage`, verdict, and artifact path.
-- `/tmp/convergo/cvg-plan-review/<run-id>/metadata.json` with:
+Before responding, write a single audit artifact
+`/tmp/convergo/cvg-plan-review/<run-id>/review.json`:
 
 ```json
 {
@@ -213,14 +216,15 @@ Before responding, write:
   "branch": "<git branch --show-current>",
   "head_sha": "<git rev-parse HEAD>",
   "verdict": "<clean | blocking findings>",
-  "completed_at": "<ISO 8601 UTC timestamp>"
+  "completed_at": "<ISO 8601 UTC timestamp>",
+  "auxiliary_coverage": "<object-form coverage from step 3b>",
+  "findings": "<merged findings>"
 }
 ```
 
 The response coverage line is a compact summary only. `review.json` must retain
-the full object-form auxiliary coverage with `persona`, `agent_role`,
-`agent_id`, `thread_id`, `artifact_path`, and `artifact_written` for every
-selected, skipped, failed, or inline reviewer.
+the full object-form auxiliary coverage with `status`, `agent_id`, and
+`artifact_written` for every selected, skipped, failed, or inline reviewer.
 
 If this review is completed as part of an orchestrated callback workflow, include
 `Audit artifact: /tmp/convergo/cvg-plan-review/<run-id>/` in the
@@ -254,9 +258,6 @@ task.
 - **Be specific.** "The invariant list might be incomplete" is not actionable.
   "The billing cron job at `src/jobs/billing-cron.ts:45` calls `getUserTier()`
   directly and is not in the surfaces list" is actionable.
-- **Reject stale workflow assumptions.** Plans must treat `feature-development`
-  as the only active workflow template. Future workflow-template discussion must
-  remain out of scope unless the issue explicitly targets that design.
 - **Check for over-design.** LLM planners tend to overcomplicate. Can slices be
   merged? Are all invariants truly cross-cutting, or could some be handled
   locally? Is the plan depth heavier than the problem warrants?

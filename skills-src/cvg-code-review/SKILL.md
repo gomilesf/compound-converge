@@ -32,8 +32,8 @@ Read project stage guidance from the task context before applying this skill.
 
 For code review, stage affects P1/P2 severity and merge-blocking criteria;
 contract gaps still block. Stage can calibrate whether missing edge-case
-resilience is blocking, but it cannot excuse an unmet plan criterion, missing
-real surface, broken error propagation.
+resilience is blocking, but it cannot excuse an unmet plan criterion, a missing
+real surface, or broken error propagation.
 
 ## Process
 
@@ -68,7 +68,7 @@ invariant matrix must all pass.
 Create a per-review audit directory before dispatching auxiliary reviewers:
 
 ```bash
-RUN_ID=$(date +%Y%m%d-%H%M%S)-$(head -c4 /dev/urandom | od -An -tx1 | tr -d ' ')
+RUN_ID=$(date +%Y%m%d-%H%M%S)-$RANDOM
 mkdir -p "/tmp/convergo/cvg-code-review/$RUN_ID"
 ```
 
@@ -112,29 +112,27 @@ If it is not available, perform the same checks yourself.
 **Final fresh exit mode:** When the task says `Review mode: final-fresh-exit`,
 selected auxiliary reviewers must be real platform dispatches. In this mode,
 inline auxiliary coverage cannot produce a final exit pass. If any selected
-reviewer cannot be dispatched, has null `agent_id` and `thread_id`, returns
+reviewer cannot be dispatched, has a null `agent_id`, returns
 invalid JSON, or fails to write its artifact, set the verdict to **Not ready**
 with a `degraded auxiliary coverage` finding and state that the review cannot
 satisfy the final fresh-exit gate.
 
 Immediately after each dispatch, initialize an auxiliary coverage record for
-that reviewer. Preserve the platform identity returned by the dispatch tool.
-If the platform exposes only one child identifier, record the same value in
-`agent_id` and `thread_id`. If the child identifier is exposed only in a later
-completion notification, update the coverage record before writing
-`review.json`. If delegation is unavailable, keep the reviewer in the coverage
-object with `inline` or `skipped` status and null identity fields.
+that reviewer. Record the platform child identifier returned by the dispatch
+tool (spawn id, session id, or thread id) in `agent_id`. If the identifier is
+exposed only in a later completion notification, update the coverage record
+before writing `review.json`. If delegation is unavailable, keep the reviewer
+in the coverage object with `inline` or `skipped` status and a null `agent_id`.
 
-Auxiliary coverage must be an object keyed by reviewer name:
+Auxiliary coverage must be an object keyed by reviewer name. Each reviewer's
+artifact lives at `<run-dir>/<reviewer-name>.json`; do not repeat the path in
+the record.
 
 ```json
 {
   "cvg-security-reviewer": {
     "status": "dispatched | inline | skipped | failed",
-    "agent_role": "<requested agent_type, for example cvg-security-reviewer>",
-    "agent_id": "<spawn_agent id, child session id, or null>",
-    "thread_id": "<child thread/session id when exposed, or null>",
-    "artifact_path": "/tmp/convergo/cvg-code-review/<run-id>/<reviewer-name>.json",
+    "agent_id": "<platform child id: spawn, session, or thread id, or null>",
     "artifact_written": true
   }
 }
@@ -145,8 +143,10 @@ must make it possible to distinguish a real platform reviewer dispatch from an
 inline fallback with the same name.
 
 When dispatching auxiliary reviewers, include the project stage and the
-domain-risk override rule in the sub-agent prompt. Replace `<run-id>` and
-`<reviewer-name>` with the actual values before dispatch.
+domain-risk override rule in the sub-agent prompt. Include the full content of
+`references/findings-schema.md` in every sub-agent prompt; it defines the JSON
+shape, severity definitions, and confidence anchors the reviewer must use.
+Replace `<run-id>` and `<reviewer-name>` with the actual values before dispatch.
 Also include this output contract verbatim:
 
 ```text
@@ -183,13 +183,20 @@ violations).
 
 ### 5. Classify findings
 
-Merge sub-agent findings with your own. Consume only valid raw JSON from
-sub-agents. If a sub-agent returns markdown, prose, citations, memory citations,
-or any text outside the JSON object, treat that auxiliary result as failed and
-perform that review lens yourself. If a selected auxiliary reviewer does not
-leave its artifact file, set `artifact_written` to false in the audit coverage
-but still use a valid raw JSON return for merge. Deduplicate by file+line, keep
-highest severity on overlap. Classify each as:
+Merge sub-agent findings with your own. Consume the JSON object from each
+sub-agent return. If the return wraps the JSON in markdown or prose, extract
+the JSON object and use it; discard the extra text and do not treat citations
+or prose around it as findings. If no JSON object conforming to
+`references/findings-schema.md` can be extracted, ask that reviewer once for a
+corrected raw JSON return when the platform supports continuing the sub-agent.
+If it is still invalid or the platform cannot continue it,
+treat that auxiliary result as failed and perform that review lens yourself. If a selected auxiliary
+reviewer does not leave its artifact file, set `artifact_written` to false in
+the audit coverage but still use a valid raw JSON return for merge.
+
+Apply the schema's merge rules: drop findings below confidence 75 unless they
+are P0 at confidence 50+, deduplicate by file+line, keep highest severity on
+overlap. Classify each surviving finding as:
 
 **Code bug** - the plan says to do X, the code does X wrong.
 - Route: worker fixes this specific code.
@@ -205,11 +212,8 @@ Treating a contract gap as a code bug causes whack-a-mole.
 
 ### 6. Produce the verdict
 
-Before responding, write:
-
-- `/tmp/convergo/cvg-code-review/<run-id>/review.json` with the merged
-  findings, object-form `auxiliary_coverage`, verdict, and artifact path.
-- `/tmp/convergo/cvg-code-review/<run-id>/metadata.json` with:
+Before responding, write a single audit artifact
+`/tmp/convergo/cvg-code-review/<run-id>/review.json`:
 
 ```json
 {
@@ -217,7 +221,9 @@ Before responding, write:
   "branch": "<git branch --show-current>",
   "head_sha": "<git rev-parse HEAD>",
   "verdict": "<Ready to merge | Ready with fixes | Not ready>",
-  "completed_at": "<ISO 8601 UTC timestamp>"
+  "completed_at": "<ISO 8601 UTC timestamp>",
+  "auxiliary_coverage": "<object-form coverage from step 3>",
+  "findings": "<merged findings>"
 }
 ```
 
@@ -229,9 +235,8 @@ Auxiliary coverage: cvg-correctness-reviewer=<dispatched|inline|failed>, cvg-tes
 ```
 
 The response coverage line is a compact summary only. `review.json` must retain
-the full object-form auxiliary coverage with `agent_role`, `agent_id`,
-`thread_id`, `artifact_path`, and `artifact_written` for every selected,
-skipped, failed, or inline reviewer.
+the full object-form auxiliary coverage with `status`, `agent_id`, and
+`artifact_written` for every selected, skipped, failed, or inline reviewer.
 
 If this review is completed as part of an orchestrated callback workflow, include
 `Audit artifact: /tmp/convergo/cvg-code-review/<run-id>/` in the
@@ -242,6 +247,10 @@ Use one of these verdicts:
 - **Ready to merge** - all plan criteria met, no P0/P1, no contract gaps
 - **Ready with fixes** - plan criteria met, only P2 non-blocking issues remain
 - **Not ready** - P0/P1 code bugs or contract gaps exist
+
+For orchestrated loops, both "Ready to merge" and "Ready with fixes" satisfy
+the exit gate; report them distinctly so the orchestrator can decide whether to
+schedule P2 cleanup. Only "Not ready" blocks.
 
 For "not ready", include every blocking finding you can see in one pass. For
 "ready with fixes", include P2s as non-blocking notes and do not loop on them.
@@ -262,9 +271,9 @@ Focused re-review mode overrides the full-review artifact shape:
 - Do not dispatch auxiliary reviewers.
 - Do not write inline auxiliary reviewer artifacts.
 - Do not include an `Auxiliary coverage:` response line.
-- If an audit artifact is required, write only focused `review.json` and
-  `metadata.json` with `review_mode: "focused-re-review"`, verdict, findings,
-  checks, branch, head sha, and completed timestamp.
+- If an audit artifact is required, write only a focused `review.json` with
+  `review_mode: "focused-re-review"`, verdict, findings, checks, branch, head
+  sha, and completed timestamp.
 
 Same-reviewer recheck is exhaustive within recheck scope: verify the old
 findings, check the fix diff and newly changed code for new P0/P1 issues, and

@@ -68,13 +68,13 @@ Find legitimate-seeming usage patterns that cause bad outcomes. These are not se
 
 ## Confidence calibration
 
-Use the anchored confidence rubric in the subagent template. Persona-specific guidance:
+Score each finding with the anchored confidence values (0, 25, 50, 75, 100) defined in the findings schema included in your prompt. Persona-specific guidance:
 
 **Anchor 100** — the failure scenario is mechanically constructible: every step in the chain is verifiable from the diff and surrounding code, no assumed runtime conditions.
 
 **Anchor 75** — you can construct a complete, concrete scenario: "given this specific input/state, execution follows this path, reaches this line, and produces this specific wrong outcome." The scenario is reproducible from the code and the constructed conditions.
 
-**Anchor 50** — you can construct the scenario but one step depends on conditions you can see but can't fully confirm — e.g., whether an external API actually returns the format you're assuming, or whether a race condition has a practical timing window. Surfaces only as P0 escape or soft buckets.
+**Anchor 50** — you can construct the scenario but one step depends on conditions you can see but can't fully confirm — e.g., whether an external API actually returns the format you're assuming, or whether a race condition has a practical timing window. Emit at anchor 50 only when severity is P0; otherwise record the concern in `residual_risks` instead of findings.
 
 **Anchor 25 or below — suppress** — the scenario requires conditions you have no evidence for: pure speculation about runtime state, theoretical cascades without traceable steps, or failure modes that require multiple unlikely conditions simultaneously.
 
@@ -99,7 +99,7 @@ Use scenario-oriented titles that describe the constructed failure, not the patt
 
 For the `evidence` array, describe the constructed scenario step by step -- the trigger, the execution path, and the failure outcome.
 
-Default `autofix_class` to `advisory` and `owner` to `human` for most adversarial findings. Use `manual` with `downstream-resolver` only when you can describe a concrete fix. Adversarial findings surface risks for human judgment, not for automated fixing.
+Include a `suggested_fix` only when you can describe a concrete fix. Scenarios that meet the confidence bar but have no clear fix are still findings; below the bar, record them in `residual_risks`.
 
 ```json
 {
